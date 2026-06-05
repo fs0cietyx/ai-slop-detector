@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import sys
-import time
 from typing import Any, Dict, List, Optional, Set
 
 import google.generativeai as genai
@@ -13,8 +12,8 @@ from tqdm.asyncio import tqdm
 # Pillar VI: Secure Observability
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
@@ -43,26 +42,28 @@ except Exception:
     logger.critical("Failed to connect to Gemini API.")
     sys.exit(1)
 
+
 async def call_gemini(prompt: str, semaphore: asyncio.Semaphore) -> Optional[str]:
     """
     Calls Gemini API with strict sanitization and concurrency guards.
     """
     if not isinstance(prompt, str) or not prompt.strip():
         return None
-        
+
     # Pillar IV: Sanitization
     prompt = "".join(char for char in prompt if ord(char) >= 32 or char in "\n\r\t")
-    
+
     async with semaphore:
         try:
             response: Any = await asyncio.to_thread(gen_model.generate_content, prompt)
-            if not response or not hasattr(response, 'text'):
+            if not response or not hasattr(response, "text"):
                 return None
             return str(response.text.strip())
         except Exception:
             return None
         finally:
             await asyncio.sleep(DELAY_BETWEEN_REQUESTS)
+
 
 async def process_batch(input_path: str, output_path: str, prompt_template: str, desc: str) -> None:
     """
@@ -73,19 +74,19 @@ async def process_batch(input_path: str, output_path: str, prompt_template: str,
 
     processed_sources: Set[str] = set()
     if os.path.exists(output_path):
-        with open(output_path, 'r', encoding='utf-8') as f:
+        with open(output_path, "r", encoding="utf-8") as f:
             for line in f:
                 try:
-                    processed_sources.add(json.loads(line)['source'])
+                    processed_sources.add(json.loads(line)["source"])
                 except (json.JSONDecodeError, KeyError):
                     continue
 
     items_to_process: List[Dict[str, Any]] = []
-    with open(input_path, 'r', encoding='utf-8') as f:
+    with open(input_path, "r", encoding="utf-8") as f:
         for line in f:
             try:
                 data: Dict[str, Any] = json.loads(line)
-                if 'source' in data and data['source'] not in processed_sources:
+                if "source" in data and data["source"] not in processed_sources:
                     items_to_process.append(data)
             except json.JSONDecodeError:
                 continue
@@ -95,33 +96,36 @@ async def process_batch(input_path: str, output_path: str, prompt_template: str,
 
     logger.info(f"Processing {len(items_to_process)} records for {desc}...")
     semaphore = asyncio.Semaphore(5)
-    
-    with open(output_path, 'a', encoding='utf-8') as f:
+
+    with open(output_path, "a", encoding="utf-8") as f:
         for data in tqdm(items_to_process, desc=desc):
-            input_text: str = str(data.get('text') or data.get('summary', ''))
+            input_text: str = str(data.get("text") or data.get("summary", ""))
             prompt: str = prompt_template.format(text=input_text)
-            
+
             result = await call_gemini(prompt, semaphore)
-            
+
             if result:
                 output_record: Dict[str, Any] = {
-                    "source": data['source'],
-                    "label": 1 if "generation" in desc.lower() else 0
+                    "source": data["source"],
+                    "label": 1 if "generation" in desc.lower() else 0,
                 }
                 if "summarize" in desc.lower():
                     output_record["summary"] = result
                 else:
                     output_record["text"] = result
-                    
-                f.write(json.dumps(output_record) + '\n')
+
+                f.write(json.dumps(output_record) + "\n")
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     s_prompt: str = "Extract factual points from this text:\n\n{text}"
     g_prompt: str = "Write a Wikipedia-style paragraph from these facts:\n\n{text}"
-    
+
     try:
-        loop.run_until_complete(process_batch(HUMAN_DATA_FILE, SUMMARIES_FILE, s_prompt, "Summarizing"))
+        loop.run_until_complete(
+            process_batch(HUMAN_DATA_FILE, SUMMARIES_FILE, s_prompt, "Summarizing")
+        )
         loop.run_until_complete(process_batch(SUMMARIES_FILE, AI_DATA_FILE, g_prompt, "Generating"))
     except KeyboardInterrupt:
         logger.info("Shutdown initiated.")

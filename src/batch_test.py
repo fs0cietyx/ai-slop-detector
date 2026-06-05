@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import warnings
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
 
 from tqdm import tqdm
 
@@ -18,6 +18,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 HUMAN_DATA_FILE: str = os.path.abspath("data/human_data.jsonl")
 MODEL_DIR: str = os.path.abspath("models/ai-slop-detector-v1")
 
+
 def run_batch_test() -> None:
     """
     Executes a formal batch evaluation against local domain-specific data.
@@ -27,7 +28,7 @@ def run_batch_test() -> None:
         return
 
     print("\n--- Batch Validation: Wikipedia Dataset ---")
-    
+
     config = DetectorConfig(model_dir=MODEL_DIR)
     try:
         detector = AISlopDetector(config)
@@ -40,34 +41,36 @@ def run_batch_test() -> None:
     results: List[Dict[str, Any]] = []
 
     # Load data for processing
-    with open(HUMAN_DATA_FILE, 'r', encoding='utf-8') as f:
+    with open(HUMAN_DATA_FILE, "r", encoding="utf-8") as f:
         lines: List[str] = f.readlines()
-        
+
     print(f"Processing {len(lines)} human paragraphs...")
-    
+
     for line in tqdm(lines, desc="Validating"):
         try:
             data: Dict[str, Any] = json.loads(line)
-            text: str = str(data.get('text', ''))
+            text: str = str(data.get("text", ""))
             if not text:
                 continue
-                
+
             prediction: Tuple[str, float] = detector.predict(text)
             label: str = prediction[0]
             confidence: float = prediction[1]
-            
+
             # Binary correctness verification
-            is_correct: bool = (label == "HUMAN-WRITTEN")
+            is_correct: bool = label == "HUMAN-WRITTEN"
             if is_correct:
                 correct += 1
-            
+
             total += 1
-            results.append({
-                "source": data.get('source'),
-                "prediction": label,
-                "confidence": confidence,
-                "correct": is_correct
-            })
+            results.append(
+                {
+                    "source": data.get("source"),
+                    "prediction": label,
+                    "confidence": confidence,
+                    "correct": is_correct,
+                }
+            )
         except Exception as e:
             print(f"Skipping malformed record: {e}")
             continue
@@ -77,15 +80,16 @@ def run_batch_test() -> None:
         return
 
     accuracy: float = correct / total
-    
-    print("\n" + "="*40)
+
+    print("\n" + "=" * 40)
     print("      WIKIPEDIA VALIDATION RESULTS")
-    print("="*40)
+    print("=" * 40)
     print(f" TOTAL SAMPLES:  {total}")
     print(f" CORRECT:        {correct}")
     print(f" INCORRECT:      {total - correct}")
     print(f" ACCURACY:       {accuracy:.2%}")
-    print("="*40 + "\n")
+    print("=" * 40 + "\n")
+
 
 if __name__ == "__main__":
     run_batch_test()
