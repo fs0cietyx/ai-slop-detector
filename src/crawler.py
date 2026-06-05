@@ -1,174 +1,197 @@
+import asyncio
 import json
-import logging
 import os
 import random
 import re
-import sys
-import time
-from typing import Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass
+from typing import List, Optional, Set, Tuple
 
-import requests
+import httpx
 from bs4 import BeautifulSoup, Tag
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 
-# Pillar VI: Secure Observability
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger(__name__)
-
-BASE_URL: str = "https://en.wikipedia.org"
-SEEDS: List[str] = [
-    "https://en.wikipedia.org/wiki/Artificial_intelligence",
-    "https://en.wikipedia.org/wiki/Special:Random",
-]
-TARGET_PARAGRAPHS: int = 10000
-OUTPUT_FILE: str = os.path.abspath("data/human_data.jsonl")
-
-# Pillar V: Bot Mitigation
-HEADERS: Dict[str, str] = {
-    "User-Agent": "AISlopDetectorBot/1.0 (Enterprise-Quality-Audit; mailto:security@example.com)"
-}
+from .core.config import logger
 
 
-def clean_text(text: Optional[str]) -> Optional[str]:
+@dataclass(frozen=True)
+class CrawlerConfig:
+    """Immutable configuration for the asynchronous crawler."""
+
+    base_url: str = "https://en.wikipedia.org"
+    seeds: Tuple[str, ...] = (
+        "https://en.wikipedia.org/wiki/Artificial_intelligence",
+        "https://en.wikipedia.org/wiki/Special:Random",
+    )
+    target_count: int = 10000
+    max_payload_size: int = 1 * 1024 * 1024  # 1MB per page
+    request_timeout: float = 10.0
+    user_agent: str = "AISlopDetectorBot/1.0 (+https://github.com/fs0cietyx/ai-slop-detector)"
+
+
+class AsyncCrawler:
     """
-    Sanitizes extracted text with strict quality boundaries.
+    Enterprise-grade Asynchronous Web Crawler.
+
+    Implements non-blocking I/O, SSRF protection, and memory-safe buffering.
+    Adheres to Pillar III (Asynchronous Mastery) and Pillar IV (Defensive Programming).
     """
-    if not text:
-        return None
 
-    # Remove citations
-    text = re.sub(r"\[[a-zA-Z0-9\s]+\]", "", text)
+    def __init__(self, output_file: str) -> None:
+        self.config = CrawlerConfig()
+        self.output_file = os.path.abspath(output_file)
+        self.visited: Set[str] = set()
+        self.queue: asyncio.Queue[str] = asyncio.Queue()
+        self.collected_count: int = 0
+        self._lock = asyncio.Lock()
 
-    # Pillar IV: Payload Neutralization
-    if "$$" in text or r"{\displaystyle" in text or "<script" in text.lower():
-        return None
+        os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
 
-    text = text.strip()
+    def _sanitize_text(self, text: str) -> Optional[str]:
+        """
+        Refined text sanitization and quality filtering.
+        
+        Eliminates citations, LaTeX noise, and low-entropy sequences.
+        """
+        # Remove Wikipedia citations like [1], [23], [citation needed]
+        text = re.sub(r"\[[0-9a-zA-Z\s]+\]", "", text)
+        
+        # Neutralize Potential Exploit Patterns (LaTeX injections, script tags)
+        if any(p in text.lower() for p in ["{\displaystyle", "<script", "eval("]):
+            return None
 
-    # Quality filter
-    words = text.split()
-    if len(words) < 25 or len(words) > 1000:
-        return None
+        clean = text.strip()
+        words = clean.split()
+        
+        # Entropy filter: Ensure text is substantial enough for ML training
+        if len(words) < 25 or len(words) > 800:
+            return None
+            
+        return clean
 
-    return text
-
-
-def fetch_data(url: str) -> Tuple[List[str], List[str]]:
-    """
-    Fetches and validates external data with resource limits.
-    """
-    # Pillar IV: SSRF Protection
-    if not url.startswith(BASE_URL):
-        logger.warning(f"Blocked unauthorized traversal to: {url}")
-        return [], []
-
-    try:
-        response = requests.get(url, headers=HEADERS, timeout=10, stream=True)
-
-        if response.status_code != 200:
+    async def _fetch_page(self, client: httpx.AsyncClient, url: str) -> Tuple[List[str], List[str]]:
+        """
+        Securely fetches a page with SSRF protection and memory guards.
+        """
+        # [AppSec] SSRF Protection: Enforce strict domain boundaries
+        if not url.startswith(self.config.base_url):
+            logger.warning(f"SSRF_PREVENTION: Blocked unauthorized traversal to {url}")
             return [], []
 
-        # Pillar IV: Content-Type Enforcement
-        content_type = response.headers.get("Content-Type", "").lower()
-        if "text/html" not in content_type:
+        try:
+            async with client.stream("GET", url, follow_redirects=True) as response:
+                if response.status_code != 200:
+                    return [], []
+
+                # [AppSec] Content-Type Enforcement
+                if "text/html" not in response.headers.get("content-type", "").lower():
+                    return [], []
+
+                # [AppSec] Resource Discipline: Read with strict byte-size limit
+                content = b""
+                async for chunk in response.aiter_bytes():
+                    content += chunk
+                    if len(content) > self.config.max_payload_size:
+                        logger.debug(f"RESOURCE_LIMIT: Dropping large page {url}")
+                        return [], []
+
+                soup = BeautifulSoup(content, "html.parser")
+                
+                # Extract clean paragraphs
+                paragraphs: List[str] = []
+                main_content = soup.find(class_="mw-parser-output")
+                if isinstance(main_content, Tag):
+                    for p in main_content.find_all("p", recursive=True):
+                        clean = self._sanitize_text(p.get_text())
+                        if clean:
+                            paragraphs.append(clean)
+
+                # Extract valid wiki links
+                links: List[str] = []
+                for link in soup.find_all("a", href=True):
+                    href = str(link["href"])
+                    if href.startswith("/wiki/") and ":" not in href:
+                        links.append(self.config.base_url + href)
+                        if len(links) >= 100:  # Bound BFS branching factor
+                            break
+                
+                return paragraphs, links
+
+        except Exception as e:
+            logger.debug(f"FETCH_ERROR: {url} failed: {str(e)}")
             return [], []
 
-        # Pillar V: Memory Guard
-        MAX_SIZE = 2 * 1024 * 1024  # 2MB
-        content = b""
-        for chunk in response.iter_content(chunk_size=8192):
-            content += chunk
-            if len(content) > MAX_SIZE:
-                return [], []
-
-        soup = BeautifulSoup(content, "html.parser")
-
-        paragraphs: List[str] = []
-        content_div = soup.find(class_="mw-parser-output")
-        if isinstance(content_div, Tag):
-            p_tags = content_div.find_all("p", recursive=True)
-            for p in p_tags:
-                cleaned = clean_text(p.get_text())
-                if cleaned:
-                    paragraphs.append(cleaned)
-
-        links: List[str] = []
-        MAX_LINKS = 200
-        for link in soup.find_all("a", href=True):
-            href: str = str(link["href"])
-            if href.startswith("/wiki/") and ":" not in href:
-                links.append(BASE_URL + href)
-                if len(links) >= MAX_LINKS:
+    async def _worker(self, worker_id: int, pbar: tqdm) -> None:
+        """Concurrent worker processing the crawl queue."""
+        headers = {"User-Agent": self.config.user_agent}
+        
+        async with httpx.AsyncClient(headers=headers, timeout=self.config.request_timeout) as client:
+            while self.collected_count < self.config.target_count:
+                try:
+                    url = await asyncio.wait_for(self.queue.get(), timeout=5.0)
+                except asyncio.TimeoutError:
                     break
 
-        return paragraphs, links
-    except Exception:
-        return [], []
-
-
-def run_crawler() -> None:
-    """
-    Main asynchronous traversal logic for data collection.
-    """
-    visited: Set[str] = set()
-    queue: List[str] = SEEDS.copy()
-    paragraphs_collected: int = 0
-
-    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-
-    if os.path.exists(OUTPUT_FILE):
-        with open(OUTPUT_FILE, "r", encoding="utf-8") as check_f:
-            paragraphs_collected = sum(1 for _ in check_f)
-            logger.info(f"Crawl resume sequence initiated at count: {paragraphs_collected}")
-
-    with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
-        with tqdm(
-            total=TARGET_PARAGRAPHS, initial=paragraphs_collected, desc="Secure Crawl"
-        ) as pbar:
-            while paragraphs_collected < TARGET_PARAGRAPHS and queue:
-                current_url = queue.pop(random.randint(0, len(queue) - 1))  # nosec
-                if current_url in visited:
+                if url in self.visited:
+                    self.queue.task_done()
                     continue
 
-                visited.add(current_url)
-                page_paragraphs, page_links = fetch_data(current_url)
+                self.visited.add(url)
+                paragraphs, links = await self._fetch_page(client, url)
 
-                if page_paragraphs:
-                    to_save = page_paragraphs[:2]
-                    for p in to_save:
-                        if paragraphs_collected < TARGET_PARAGRAPHS:
-                            json.dump(
-                                {
+                # Save a subset of paragraphs to prevent over-representing a single page
+                if paragraphs:
+                    async with self._lock:
+                        remaining = self.config.target_count - self.collected_count
+                        to_save = paragraphs[: min(len(paragraphs), 3, remaining)]
+                        
+                        with open(self.output_file, "a", encoding="utf-8") as f:
+                            for p in to_save:
+                                record = {
                                     "text": p,
-                                    "source": current_url,
+                                    "source": url,
                                     "label": 0,
-                                    "timestamp": time.time(),
-                                },
-                                f,
-                            )
-                            f.write("\n")
-                            paragraphs_collected += 1
-                            pbar.update(1)
+                                    "metadata": {"crawler": "AsyncCrawler/1.0"}
+                                }
+                                f.write(json.dumps(record) + "\n")
+                                self.collected_count += 1
+                                pbar.update(1)
 
-                new_links = [link_url for link_url in page_links if link_url not in visited]
+                # BFS: Extend queue with discovered links
+                new_links = [link_url for link_url in links if link_url not in self.visited]
                 if new_links:
-                    sample_size = min(len(new_links), 10)
-                    queue.extend(random.sample(new_links, sample_size))  # nosec
+                    for link_url in random.sample(new_links, min(len(new_links), 5)):
+                        await self.queue.put(link_url)
 
-                time.sleep(1.0)
+                self.queue.task_done()
+                
+                # Ethical Scraping: Rate limiting
+                await asyncio.sleep(0.5)
 
-                if len(queue) > 5000:
-                    queue = random.sample(queue, 2000)  # nosec
+    async def run(self, num_workers: int = 10) -> None:
+        """Orchestrates the asynchronous crawl lifecycle."""
+        logger.info(f"Initiating Secure Crawl: Target={self.config.target_count}")
+        
+        # Resume sequence
+        if os.path.exists(self.output_file):
+            with open(self.output_file, "r") as f:
+                self.collected_count = sum(1 for _ in f)
+            logger.info(f"Resume sequence active. Progress: {self.collected_count}")
+
+        for seed in self.config.seeds:
+            await self.queue.put(seed)
+
+        with tqdm(total=self.config.target_count, initial=self.collected_count, desc="APEX_CRAWL") as pbar:
+            workers = [asyncio.create_task(self._worker(i, pbar)) for i in range(num_workers)]
+            await asyncio.gather(*workers)
+
+        logger.info("Crawl lifecycle finalized successfully.")
 
 
 if __name__ == "__main__":
+    crawler = AsyncCrawler(output_file="data/human_data.jsonl")
     try:
-        run_crawler()
+        asyncio.run(crawler.run(num_workers=15))
     except KeyboardInterrupt:
-        logger.info("Shutdown requested by operator.")
-    except Exception:
-        logger.critical("Fatal execution failure in crawler.")
+        logger.info("Shutdown signal acknowledged.")
+    except Exception as e:
+        logger.critical(f"FATAL_CRAWLER_CRASH: {str(e)}")

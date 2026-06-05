@@ -1,19 +1,29 @@
-requests
-beautifulsoup4
-tqdm
-pandas
-google-generativeai
-python-dotenv
-datasets
-torch
-transformers
-peft
-accelerate
-evaluate
-scikit-learn
-pydantic
-pydantic-settings
-ruff
-mypy
-bandit
-pytest
+# --- Core Dependencies ---
+httpx>=0.25.0
+beautifulsoup4>=4.12.0
+tqdm>=4.66.0
+pandas>=2.1.0
+google-generativeai>=0.3.0
+python-dotenv>=1.0.0
+datasets>=2.15.0
+
+# --- ML Infrastructure ---
+torch>=2.1.0
+transformers>=4.35.0
+peft>=0.6.0
+accelerate>=0.24.0
+evaluate>=0.4.0
+scikit-learn>=1.3.0
+
+# --- API Layer (Enterprise) ---
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+slowapi>=0.1.8
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# --- Dev & CI/CD ---
+ruff>=0.1.5
+mypy>=1.7.0
+bandit>=1.7.5
+pytest>=7.4.0

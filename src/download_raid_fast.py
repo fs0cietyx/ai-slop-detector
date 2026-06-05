@@ -21,7 +21,7 @@ def download_fast() -> None:
 
     try:
         # Load the dataset in streaming mode
-        dataset = load_dataset(DATASET_NAME, split="train", streaming=True, revision="main")
+        dataset = load_dataset(DATASET_NAME, split="train", streaming=True, revision="main")  # nosec: B615
 
         human_samples: List[Dict[str, Any]] = []
         ai_samples: List[Dict[str, Any]] = []

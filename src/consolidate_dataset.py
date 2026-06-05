@@ -4,55 +4,69 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-HUMAN_DATA_FILE: str = "data/human_data.jsonl"
-AI_DATA_FILE: str = "data/ai_data.jsonl"
-OUTPUT_FILE: str = "data/training_dataset.csv"
+from .core.config import logger
 
 
-def consolidate() -> None:
+def run_consolidation() -> None:
     """
-    Merges local human and AI data streams into a unified training artifact.
+    Merges distributed human and AI data streams into a validated training artifact.
 
-    Pillar I: Architectural Rigor - Ensures data consistency and label mapping.
+    Adheres to Pillar I (Architectural Rigor) and Pillar IV (Defensive Programming).
     """
-    if not os.path.exists(HUMAN_DATA_FILE) or not os.path.exists(AI_DATA_FILE):
-        print("Error: Required data files not found.")
+    human_file = "data/human_data.jsonl"
+    ai_file = "data/ai_data.jsonl"
+    output_file = "data/training_dataset.csv"
+
+    if not os.path.exists(human_file) or not os.path.exists(ai_file):
+        logger.error("CONSOLIDATION_HALTED: Source JSONL files missing.")
         return
 
-    data: List[Dict[str, Any]] = []
+    logger.info("Initiating Data Consolidation Cycle...")
+    records: List[Dict[str, Any]] = []
 
-    # Ingest Human Data
-    with open(HUMAN_DATA_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                item = json.loads(line)
-                data.append({"text": item["text"], "label": 0})
-            except (json.JSONDecodeError, KeyError):
-                continue
+    def ingest_file(path: str, expected_label: int) -> int:
+        count = 0
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    item = json.loads(line)
+                    text = item.get("text")
+                    if text and isinstance(text, str) and len(text) > 100:
+                        records.append({
+                            "text": text.strip(),
+                            "label": expected_label,
+                            "source_origin": item.get("source", "unknown")
+                        })
+                        count += 1
+                except Exception:
+                    continue
+        return count
 
-    human_count = len(data)
-    print(f"Loaded {human_count} human paragraphs.")
+    # Ingest human data (Label 0)
+    h_count = ingest_file(human_file, 0)
+    logger.info(f"Ingested {h_count} human-origin samples.")
 
-    # Ingest AI Data
-    ai_count = 0
-    with open(AI_DATA_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                item = json.loads(line)
-                data.append({"text": item["text"], "label": 1})
-                ai_count += 1
-            except (json.JSONDecodeError, KeyError):
-                continue
+    # Ingest AI data (Label 1)
+    a_count = ingest_file(ai_file, 1)
+    logger.info(f"Ingested {a_count} AI-origin samples.")
 
-    print(f"Loaded {ai_count} AI paragraphs.")
+    if not records:
+        logger.warning("PIPELINE_IDLE: No valid records found for consolidation.")
+        return
 
-    # Conversion and Shuffling
-    df = pd.DataFrame(data)
-    df = df.sample(frac=1).reset_index(drop=True)
+    # [Optimization] Performance-aware DataFrame conversion
+    df = pd.DataFrame(records)
+    
+    # [AppSec] Integrity: Shuffle dataset to prevent bias during epoch boundaries
+    df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-    df.to_csv(OUTPUT_FILE, index=False)
-    print(f"Successfully consolidated {len(df)} samples into {OUTPUT_FILE}")
+    # Export to CSV for Trainer ingestion
+    df.to_csv(output_file, index=False)
+    logger.info(f"Successfully consolidated {len(df)} samples into {output_file}")
 
 
 if __name__ == "__main__":
-    consolidate()
+    try:
+        run_consolidation()
+    except Exception as e:
+        logger.critical(f"FATAL_CONSOLIDATION_FAILURE: {str(e)}")

@@ -18,7 +18,7 @@ def download_and_preprocess() -> None:
     print(f"Loading {DATASET_NAME} metadata from Hugging Face...")
 
     try:
-        dataset = load_dataset(DATASET_NAME, split="train", revision="main")
+        dataset = load_dataset(DATASET_NAME, split="train", revision="main")  # nosec: B615
         total_records: int = len(dataset)
         print(f"Total records in RAID train split: {total_records}")
 

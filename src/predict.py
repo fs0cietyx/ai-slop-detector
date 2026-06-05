@@ -1,47 +1,80 @@
 import sys
+import time
+from typing import Final
 
-from src.core.config import get_logger
-from src.core.engine import InferenceEngine
+from .core.config import logger
+from .core.engine import InferenceEngine
 
-logger = get_logger(__name__)
+# --- Cinematic UI Components ---
+BANNER: Final[str] = r"""
+    ___    ____   _____ __    ____  ____ 
+   /   |  /  _/  / ___// /   / __ \/ __ \
+  / /| |  / /    \__ \/ /   / / / / /_/ /
+ / ___ |_/ /    ___/ / /___/ /_/ / ____/ 
+/_/  |_/___/   /____/_____/\____/_/      
+                                         
+    DETECTOR | THE APEX PROTOCOL v1.0
+"""
 
+HR: Final[str] = " " + "─" * 45
+GLOW_DOT: Final[str] = "●"
 
-def main() -> None:
+def print_ui_header() -> None:
+    """Renders the cinematic high-fidelity banner."""
+    print("\033[1;36m" + BANNER + "\033[0m")
+    print(f"\033[1;30m{HR}\033[0m")
+
+def run_cli() -> None:
     """
-    Standard CLI Entrypoint for AI slop detection.
-
-    Demonstrates architectural modularity and defensive programming.
+    Enterprise CLI Entrypoint for AI Slop Detection.
+    
+    Implements high-fidelity visual reporting and hardware acceleration telemetry.
     """
     if len(sys.argv) < 2:
-        print("\n🚀 AI Slop Detector v1.0")
-        print('Usage: python -m src.predict "Your text here..."\n')
-        sys.exit(1)
+        print_ui_header()
+        print("\n \033[1;33m[!] USAGE:\033[0m")
+        print(" python -m src.predict \"Your payload here...\"\n")
+        sys.exit(0)
 
     payload = sys.argv[1]
-
+    print_ui_header()
+    
     try:
-        # Lazy initialization of the engine
+        # [Visual Flow] Simulated system check for cinematic effect
+        print(f" \033[1;34m{GLOW_DOT}\033[0m INITIALIZING_INFERENCE_ENGINE...")
+        
+        start_time = time.time()
+        
+        # Singleton engine initialization (hardware detection happens here)
         engine = InferenceEngine()
+        
+        print(f" \033[1;34m{GLOW_DOT}\033[0m ANALYZING_TEXT_VECTORS...")
         label, confidence = engine.predict(payload)
+        
+        latency_ms = (time.time() - start_time) * 1000
 
-        # Standardized output for analysis reports
-        print("\n" + "═" * 50)
-        print("   🔍 ARCHITECTURAL ANALYSIS REPORT")
-        print("═" * 50)
-        print(f" CLASSIFICATION : {label}")
-        print(f" CONFIDENCE     : {confidence:.4%}")
-        print(" STATUS         : VERIFIED_INFERENCE")
-        print("═" * 50 + "\n")
+        # --- Visual Inference Report ---
+        status_color = "\033[1;32m" if label == "HUMAN-WRITTEN" else "\033[1;31m"
+        conf_color = "\033[1;32m" if confidence > 0.8 else "\033[1;33m"
+
+        print(f"\033[1;30m{HR}\033[0m")
+        print(f"  \033[1;37mIDENTIFICATION :\033[0m {status_color}{label}\033[0m")
+        print(f"  \033[1;37mCONFIDENCE     :\033[0m {conf_color}{confidence:.2%}\033[0m")
+        print(f"  \033[1;37mCOMPUTE_TIME   :\033[0m \033[1;34m{latency_ms:.2f}ms\033[0m")
+        print(f"  \033[1;37mHW_CONTEXT     :\033[0m \033[1;35m{engine._device.type.upper()}\033[0m")
+        print(f"\033[1;30m{HR}\033[0m")
+        
+        # Bottom decorative bar
+        print(" \033[1;32m[✓]\033[0m INFERENCE_AUDIT_COMPLETE\n")
 
     except KeyboardInterrupt:
-        logger.info("Interrupt received. Shutdown complete.")
+        logger.info("CLI_SHUTDOWN: Operation cancelled by operator.")
         sys.exit(0)
     except Exception as e:
-        # Secure error handling: log the detail, print the generic failure
-        logger.critical(f"Panic in CLI execution: {str(e)}")
-        print("\n[!] CRITICAL: System-wide inference failure. Check logs.\n")
+        logger.critical(f"CLI_FATAL_ERROR: {str(e)}")
+        print("\n \033[1;31m[!] CRITICAL_FAILURE: System panic. Check audit logs.\033[0m\n")
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    run_cli()

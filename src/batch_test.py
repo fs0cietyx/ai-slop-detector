@@ -2,12 +2,12 @@ import json
 import logging
 import os
 import warnings
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from tqdm import tqdm
 
 # Pillar I: Modularity - Use absolute imports for reliability
-from src.core.inference import AISlopDetector, DetectorConfig
+from .core.engine import InferenceEngine
 
 # Pillar VI: Secure Observability
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -16,8 +16,6 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 # Configuration
 HUMAN_DATA_FILE: str = os.path.abspath("data/human_data.jsonl")
-MODEL_DIR: str = os.path.abspath("models/ai-slop-detector-v1")
-
 
 def run_batch_test() -> None:
     """
@@ -29,9 +27,8 @@ def run_batch_test() -> None:
 
     print("\n--- Batch Validation: Wikipedia Dataset ---")
 
-    config = DetectorConfig(model_dir=MODEL_DIR)
     try:
-        detector = AISlopDetector(config)
+        detector = InferenceEngine()
     except Exception as e:
         print(f"Failed to initialize detector: {e}")
         return
@@ -53,10 +50,9 @@ def run_batch_test() -> None:
             if not text:
                 continue
 
-            prediction: Tuple[str, float] = detector.predict(text)
+            prediction = detector.predict(text)
             label: str = prediction[0]
             confidence: float = prediction[1]
-
             # Binary correctness verification
             is_correct: bool = label == "HUMAN-WRITTEN"
             if is_correct:
