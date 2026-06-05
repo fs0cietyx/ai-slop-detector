@@ -1,5 +1,5 @@
 # --- Stage 1: Builder ---
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # [AppSec] Disable pip cache and prevent pyc generation
 ENV PIP_NO_CACHE_DIR=1 \
@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # --- Stage 2: Production ---
-FROM python:3.11-slim as runtime
+FROM python:3.11-slim AS runtime
 
 LABEL maintainer="AI Slop Detector Team" \
       org.opencontainers.image.title="AI Slop Detector" \
@@ -34,12 +34,12 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/pytho
 
 # [AppSec] Infrastructure Isolation: Copy only necessary source code
 COPY src/ src/
-COPY models/ models/
 COPY .env.example .env
 
 # [Security] Enforce ownership for the non-root user
-RUN chown -R slopbot:slopbot /app && \
-    mkdir -p /app/data && chown -R slopbot:slopbot /app/data
+RUN mkdir -p /app/data /app/models && \
+    chown -R slopbot:slopbot /app && \
+    chmod -R 755 /app
 
 # [AppSec] Environment Variables: Standardized defaults
 ENV PATH="/home/slopbot/.local/bin:${PATH}" \

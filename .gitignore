@@ -13,7 +13,8 @@ ENV/
 # Project Data
 data/
 logs/
-models/
+models/*
+!models/.gitkeep
 *.log
 nohup.out
 

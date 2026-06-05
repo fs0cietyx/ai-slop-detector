@@ -54,7 +54,7 @@ docker-build:
 
 .PHONY: docker-run
 docker-run:
-	docker run -p 8000:8000 --env-file .env ai-slop-detector:latest
+	docker run -p 8000:8000 --env-file .env -v $$(pwd)/models:/app/models ai-slop-detector:latest
 
 # --- Cleanup ---
 .PHONY: clean

@@ -102,7 +102,12 @@ make run-api
 *   **Prediction:** `POST /v1/predict` (Requires `X-API-KEY` header)
 *   **Interactive Docs:** `http://localhost:8000/docs`
 
----
+#### **Docker Container (Isolated Execution)**
+Build and run the containerized suite. Note that heavy model assets are mounted as a volume to keep the image lightweight and portable:
+```bash
+make docker-build
+make docker-run
+```
 
 ## 🔒 Security Mandates (The Zero-Trust Model)
 *   **Secrets Isolation:** All keys are handled via `SecretStr` containers to prevent accidental leakage in logs or telemetry.
