@@ -3,12 +3,14 @@ import json
 import logging
 import os
 import sys
+import time
+from typing import Any, Dict, List, Optional, Set
 
 import google.generativeai as genai
 from dotenv import load_dotenv
 from tqdm.asyncio import tqdm
 
-# Pillar 6: Secure Observability
+# Pillar VI: Secure Observability
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -18,70 +20,58 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-# Pillar 1: Secrets Management - Strict Variable Parsing
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Pillar I: Secrets Isolation
+GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY or GEMINI_API_KEY == "your_key_here":
-    logger.critical("ACCESS DENIED: GEMINI_API_KEY not found in environment.")
+    logger.critical("ACCESS DENIED: GEMINI_API_KEY missing.")
     sys.exit(1)
 
 # Configuration
-HUMAN_DATA_FILE = os.path.abspath("data/human_data.jsonl")
-SUMMARIES_FILE = os.path.abspath("data/summaries.jsonl")
-AI_DATA_FILE = os.path.abspath("data/ai_data.jsonl")
-MODEL_NAME = "gemini-1.5-flash"
+HUMAN_DATA_FILE: str = os.path.abspath("data/human_data.jsonl")
+SUMMARIES_FILE: str = os.path.abspath("data/summaries.jsonl")
+AI_DATA_FILE: str = os.path.abspath("data/ai_data.jsonl")
+MODEL_NAME: str = "gemini-1.5-flash"
 
-# Pillar 5: Strict Rate Limiting (Hardcoded per Tier)
-REQUESTS_PER_MINUTE = 15
-DELAY_BETWEEN_REQUESTS = 60 / REQUESTS_PER_MINUTE
+# Pillar V: Rate Limiting
+REQUESTS_PER_MINUTE: int = 15
+DELAY_BETWEEN_REQUESTS: float = 60 / REQUESTS_PER_MINUTE
 
-# Secure API Configuration
 try:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel(MODEL_NAME)
+    gen_model = genai.GenerativeModel(MODEL_NAME)
 except Exception:
-    logger.critical("Failed to initialize cryptographic connection to Gemini API.")
+    logger.critical("Failed to connect to Gemini API.")
     sys.exit(1)
 
-async def call_gemini(prompt, semaphore):
+async def call_gemini(prompt: str, semaphore: asyncio.Semaphore) -> Optional[str]:
     """
-    Calls Gemini API with strict sanitization (Pillar 4) and rate limiting (Pillar 5).
+    Calls Gemini API with strict sanitization and concurrency guards.
     """
-    # Pillar 4: Aggressive Input Sanitization
     if not isinstance(prompt, str) or not prompt.strip():
-        logger.warning("Rejected malformed AI prompt payload.")
         return None
         
-    # Neutralize control characters
+    # Pillar IV: Sanitization
     prompt = "".join(char for char in prompt if ord(char) >= 32 or char in "\n\r\t")
     
     async with semaphore:
         try:
-            # Pillar 5: Concurrency Guard
-            response = await asyncio.to_thread(model.generate_content, prompt)
-            
-            # Validate Response Integrity
-            if not response or not hasattr(response, 'text') or not response.text:
-                logger.error("Incomplete response received from API.")
+            response: Any = await asyncio.to_thread(gen_model.generate_content, prompt)
+            if not response or not hasattr(response, 'text'):
                 return None
-                
-            return response.text.strip()
+            return str(response.text.strip())
         except Exception:
-            # Pillar 6: Secure Logging - Do not leak API error details which might contain secrets
-            logger.error("External API interaction failed.")
             return None
         finally:
             await asyncio.sleep(DELAY_BETWEEN_REQUESTS)
 
-async def process_batch(input_path, output_path, prompt_template, desc):
+async def process_batch(input_path: str, output_path: str, prompt_template: str, desc: str) -> None:
     """
-    Generalized batch processor with strict schema validation (Pillar 4).
+    Managed batch processor for high-volume AI generation.
     """
     if not os.path.isfile(input_path):
-        logger.error(f"Input vector missing: {input_path}")
         return
 
-    # Load existing to prevent duplicate effort/API cost
-    processed_sources = set()
+    processed_sources: Set[str] = set()
     if os.path.exists(output_path):
         with open(output_path, 'r', encoding='utf-8') as f:
             for line in f:
@@ -90,42 +80,36 @@ async def process_batch(input_path, output_path, prompt_template, desc):
                 except (json.JSONDecodeError, KeyError):
                     continue
 
-    items_to_process = []
+    items_to_process: List[Dict[str, Any]] = []
     with open(input_path, 'r', encoding='utf-8') as f:
         for line in f:
             try:
-                data = json.loads(line)
-                # Pillar 4: Schema Validation
-                if 'source' in data and ('text' in data or 'summary' in data):
-                    if data['source'] not in processed_sources:
-                        items_to_process.append(data)
+                data: Dict[str, Any] = json.loads(line)
+                if 'source' in data and data['source'] not in processed_sources:
+                    items_to_process.append(data)
             except json.JSONDecodeError:
-                logger.warning("Dropped malformed JSON record during ingestion.")
                 continue
 
     if not items_to_process:
-        logger.info(f"Batch {desc}: No new payloads identified.")
         return
 
-    logger.info(f"Initiating {desc} for {len(items_to_process)} records...")
-    semaphore = asyncio.Semaphore(5) # Pillar 5: Concurrency Limit
+    logger.info(f"Processing {len(items_to_process)} records for {desc}...")
+    semaphore = asyncio.Semaphore(5)
     
     with open(output_path, 'a', encoding='utf-8') as f:
         for data in tqdm(items_to_process, desc=desc):
-            input_text = data.get('text') or data.get('summary')
-            prompt = prompt_template.format(text=input_text)
+            input_text: str = str(data.get('text') or data.get('summary', ''))
+            prompt: str = prompt_template.format(text=input_text)
             
             result = await call_gemini(prompt, semaphore)
             
             if result:
-                # Construct clean output schema
-                output_record = {
+                output_record: Dict[str, Any] = {
                     "source": data['source'],
                     "label": 1 if "generation" in desc.lower() else 0
                 }
                 if "summarize" in desc.lower():
                     output_record["summary"] = result
-                    output_record["original_text"] = input_text
                 else:
                     output_record["text"] = result
                     
@@ -133,17 +117,13 @@ async def process_batch(input_path, output_path, prompt_template, desc):
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    
-    summarize_prompt = "Extract key factual points from this text as concise bullet points:\n\n{text}"
-    generate_prompt = "Write a professional Wikipedia-style paragraph based ONLY on these facts:\n\n{text}"
+    s_prompt: str = "Extract factual points from this text:\n\n{text}"
+    g_prompt: str = "Write a Wikipedia-style paragraph from these facts:\n\n{text}"
     
     try:
-        logger.info("--- Phase 1: Secure Summarization ---")
-        loop.run_until_complete(process_batch(HUMAN_DATA_FILE, SUMMARIES_FILE, summarize_prompt, "Summarizing"))
-        
-        logger.info("\n--- Phase 2: Secure Generation ---")
-        loop.run_until_complete(process_batch(SUMMARIES_FILE, AI_DATA_FILE, generate_prompt, "Generating"))
+        loop.run_until_complete(process_batch(HUMAN_DATA_FILE, SUMMARIES_FILE, s_prompt, "Summarizing"))
+        loop.run_until_complete(process_batch(SUMMARIES_FILE, AI_DATA_FILE, g_prompt, "Generating"))
     except KeyboardInterrupt:
-        logger.info("System shutdown initiated by administrator.")
+        logger.info("Shutdown initiated.")
     except Exception:
-        logger.critical("Panic: System-wide failure in generation pipeline.")
+        logger.critical("Fatal pipeline failure.")

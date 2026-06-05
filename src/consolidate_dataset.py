@@ -1,41 +1,52 @@
 import json
 import os
+from typing import List, Dict, Any
 
 import pandas as pd
 
-HUMAN_DATA_FILE = "data/human_data.jsonl"
-AI_DATA_FILE = "data/ai_data.jsonl"
-OUTPUT_FILE = "data/training_dataset.csv"
+HUMAN_DATA_FILE: str = "data/human_data.jsonl"
+AI_DATA_FILE: str = "data/ai_data.jsonl"
+OUTPUT_FILE: str = "data/training_dataset.csv"
 
-def consolidate():
+def consolidate() -> None:
+    """
+    Merges local human and AI data streams into a unified training artifact.
+    
+    Pillar I: Architectural Rigor - Ensures data consistency and label mapping.
+    """
     if not os.path.exists(HUMAN_DATA_FILE) or not os.path.exists(AI_DATA_FILE):
         print("Error: Required data files not found.")
         return
 
-    data = []
+    data: List[Dict[str, Any]] = []
     
-    # Read Human Data
-    with open(HUMAN_DATA_FILE, 'r') as f:
+    # Ingest Human Data
+    with open(HUMAN_DATA_FILE, 'r', encoding='utf-8') as f:
         for line in f:
-            item = json.loads(line)
-            data.append({"text": item['text'], "label": 0})
+            try:
+                item = json.loads(line)
+                data.append({"text": item['text'], "label": 0})
+            except (json.JSONDecodeError, KeyError):
+                continue
     
     human_count = len(data)
     print(f"Loaded {human_count} human paragraphs.")
 
-    # Read AI Data
+    # Ingest AI Data
     ai_count = 0
-    with open(AI_DATA_FILE, 'r') as f:
+    with open(AI_DATA_FILE, 'r', encoding='utf-8') as f:
         for line in f:
-            item = json.loads(line)
-            data.append({"text": item['text'], "label": 1})
-            ai_count += 1
+            try:
+                item = json.loads(line)
+                data.append({"text": item['text'], "label": 1})
+                ai_count += 1
+            except (json.JSONDecodeError, KeyError):
+                continue
     
     print(f"Loaded {ai_count} AI paragraphs.")
     
-    # Convert to DataFrame and save
+    # Conversion and Shuffling
     df = pd.DataFrame(data)
-    # Shuffle the dataset
     df = df.sample(frac=1).reset_index(drop=True)
     
     df.to_csv(OUTPUT_FILE, index=False)
