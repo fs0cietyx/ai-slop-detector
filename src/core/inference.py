@@ -1,13 +1,11 @@
-import logging
-import os
-from dataclasses import dataclass
-from typing import Dict, Tuple
-
 import torch
 import torch.nn.functional as F
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from peft import PeftModel
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, PreTrainedTokenizer
-
+from typing import Tuple, Dict, Any
+import os
+import logging
+from dataclasses import dataclass
 
 # Pillar I: Architectural Rigor - Dedicated Config Container
 @dataclass(frozen=True)
@@ -56,7 +54,7 @@ class AISlopDetector:
             raise FileNotFoundError(f"Model directory not found at {self._config.model_dir}")
 
         try:
-            self._tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(self._config.base_model)
+            self._tokenizer: Any = AutoTokenizer.from_pretrained(self._config.base_model)
             
             # Pillar II: ML Optimization - Lazy loading of base model
             base_model = AutoModelForSequenceClassification.from_pretrained(
@@ -125,8 +123,8 @@ class AISlopDetector:
                 outputs = self._model(**inputs)
                 probabilities = F.softmax(outputs.logits, dim=-1)
                 
-            prediction_idx = torch.argmax(probabilities, dim=-1).item()
-            confidence: float = probabilities[0][prediction_idx].item()
+            prediction_idx = int(torch.argmax(probabilities, dim=-1).item())
+            confidence = float(probabilities[0][prediction_idx].item())
             
             label = "AI-GENERATED" if prediction_idx == 1 else "HUMAN-WRITTEN"
             return label, confidence

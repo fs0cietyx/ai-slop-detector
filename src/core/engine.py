@@ -1,16 +1,14 @@
-import os
-from typing import Dict, Final, Tuple
-
 import torch
 import torch.nn.functional as F
-from peft import PeftModel
 from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    PreTrainedModel,
-    PreTrainedTokenizer,
+    AutoTokenizer, 
+    AutoModelForSequenceClassification, 
+    PreTrainedTokenizerBase,
+    PreTrainedModel
 )
-
+from peft import PeftModel
+from typing import Tuple, Dict, Final, Any
+import os
 from .config import config, get_logger
 
 logger = get_logger(__name__)
@@ -45,7 +43,7 @@ class InferenceEngine:
             return torch.device("mps")
         return torch.device("cpu")
 
-    def _load_assets(self) -> Tuple[PreTrainedTokenizer, PreTrainedModel]:
+    def _load_assets(self) -> Tuple[Any, Any]:
         """Secure loading and mounting of model weights."""
         if not os.path.exists(config.ADAPTER_PATH):
             logger.critical(f"Asset Integrity Failure: {config.ADAPTER_PATH} missing.")
@@ -105,7 +103,7 @@ class InferenceEngine:
         outputs = self._model(**inputs)
         probs = F.softmax(outputs.logits, dim=-1)
         
-        idx = torch.argmax(probs, dim=-1).item()
-        confidence = probs[0][idx].item()
+        idx = int(torch.argmax(probs, dim=-1).item())
+        confidence = float(probs[0][idx].item())
         
-        return self.LABEL_MAP[int(idx)], float(confidence)
+        return self.LABEL_MAP[idx], confidence

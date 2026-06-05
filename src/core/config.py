@@ -1,9 +1,8 @@
-import logging
-from typing import Optional
-
-from pydantic import Field, validator
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from pydantic import Field, validator
+from typing import Optional, Any
+import logging
 
 class AppConfig(BaseSettings):
     """
@@ -19,7 +18,7 @@ class AppConfig(BaseSettings):
     MAX_INPUT_CHARS: int = Field(default=5000, ge=100, le=10000)
     
     # External API Settings
-    GEMINI_API_KEY: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
+    GEMINI_API_KEY: Optional[str] = Field(default=None, alias="GEMINI_API_KEY")
     
     # Environment
     ENV: str = Field(default="production", pattern="^(development|staging|production)$")
@@ -28,11 +27,12 @@ class AppConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="ignore"
+        extra="ignore",
+        populate_by_name=True
     )
 
     @validator("GEMINI_API_KEY")
-    def validate_api_key(cls, v, values):
+    def validate_api_key(cls, v: Optional[str], values: dict[str, Any]) -> Optional[str]:
         if values.get("ENV") == "production" and not v:
             logging.warning("GEMINI_API_KEY is missing. Generation features will be disabled.")
         return v
