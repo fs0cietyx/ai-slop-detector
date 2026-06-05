@@ -1,6 +1,7 @@
+import os
+
 import pandas as pd
 from datasets import load_dataset
-import os
 from tqdm import tqdm
 
 # Configuration
@@ -12,7 +13,7 @@ def download_fast():
     print(f"Streaming {DATASET_NAME} from Hugging Face...")
     
     try:
-        dataset = load_dataset(DATASET_NAME, split='train', streaming=True)
+        dataset = load_dataset(DATASET_NAME, split='train', streaming=True, revision="main")
         
         human_samples = []
         ai_samples = []

@@ -1,13 +1,14 @@
+import json
+import logging
+import os
+import random
+import re
+import sys
+import time
+
 import requests
 from bs4 import BeautifulSoup
-import json
-import random
-import time
-import re
 from tqdm import tqdm
-import os
-import logging
-import sys
 
 # Pillar 6: Secure Observability
 logging.basicConfig(
@@ -112,7 +113,7 @@ def fetch_data(url):
         
         return paragraphs, links
     except Exception:
-        logger.error(f"Network interaction error during crawl.")
+        logger.error("Network interaction error during crawl.")
         return None, []
 
 def run_crawler():
@@ -156,7 +157,8 @@ def run_crawler():
                             paragraphs_collected += 1
                             pbar.update(1)
                 
-                new_links = [l for l in page_links if l not in visited]
+                new_links = [link_url for link_url in page_links if link_url not in visited]
+
                 if new_links:
                     # Sample 10 links to maintain a manageable queue (Pillar 5)
                     sample_size = min(len(new_links), 10)
@@ -167,7 +169,7 @@ def run_crawler():
                 
                 # Queue management to prevent memory exhaustion (Pillar 5)
                 if len(queue) > 5000:
-                    queue = random.sample(queue, 2000)
+                    queue = random.sample(queue, 2000) # nosec
 
 if __name__ == "__main__":
     try:

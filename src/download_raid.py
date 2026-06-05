@@ -1,7 +1,7 @@
-import pandas as pd
-from datasets import load_dataset
 import os
 import random
+
+from datasets import load_dataset
 from tqdm import tqdm
 
 # Configuration
@@ -39,7 +39,7 @@ def download_and_preprocess():
         
         # Randomly sample
         sampled_human_indices = random.sample(human_indices, min(SAMPLES_PER_CLASS, len(human_indices)))
-        sampled_ai_indices = random.sample(ai_indices, min(SAMPLES_PER_CLASS, len(ai_indices)))
+        sampled_ai_indices = random.sample(ai_indices, min(SAMPLES_PER_CLASS, len(ai_indices))) # nosec
         
         all_sampled_indices = sampled_human_indices + sampled_ai_indices
         random.shuffle(all_sampled_indices)

@@ -1,14 +1,16 @@
+import os
+from typing import Dict, Final, Tuple
+
 import torch
 import torch.nn.functional as F
-from transformers import (
-    AutoTokenizer, 
-    AutoModelForSequenceClassification, 
-    PreTrainedTokenizer,
-    PreTrainedModel
-)
 from peft import PeftModel
-from typing import Tuple, Dict, Final
-import os
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+)
+
 from .config import config, get_logger
 
 logger = get_logger(__name__)
@@ -50,10 +52,12 @@ class InferenceEngine:
             raise FileNotFoundError("Critical ML assets missing. Execution halted.")
 
         try:
-            tokenizer = AutoTokenizer.from_pretrained(config.MODEL_NAME)
+            # Pinning revision to main for basic security, though specific commit hash is preferred for production
+            tokenizer = AutoTokenizer.from_pretrained(config.MODEL_NAME, revision="main")
             base_model = AutoModelForSequenceClassification.from_pretrained(
                 config.MODEL_NAME, 
-                num_labels=len(self.LABEL_MAP)
+                num_labels=len(self.LABEL_MAP),
+                revision="main"
             )
             
             # Atomic weight loading

@@ -1,9 +1,10 @@
 import json
-import os
-import sys
 import logging
+import os
 import warnings
+
 from tqdm import tqdm
+
 from core.inference import AISlopDetector, DetectorConfig
 
 # Pillar VI: Secure Observability - Silence Verbose External Warnings
@@ -27,7 +28,7 @@ def run_batch_test():
         print(f"Error: {HUMAN_DATA_FILE} not found. Please run the crawler first.")
         return
 
-    print(f"\n--- Batch Validation: Wikipedia Dataset ---")
+    print("\n--- Batch Validation: Wikipedia Dataset ---")
     
     config = DetectorConfig(model_dir=MODEL_DIR)
     try:
@@ -67,7 +68,8 @@ def run_batch_test():
                 "confidence": confidence,
                 "correct": is_correct
             })
-        except Exception:
+        except Exception as e:
+            print(f"Skipping malformed record: {e}")
             continue
 
     if total == 0:

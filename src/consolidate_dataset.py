@@ -1,6 +1,7 @@
 import json
-import pandas as pd
 import os
+
+import pandas as pd
 
 HUMAN_DATA_FILE = "data/human_data.jsonl"
 AI_DATA_FILE = "data/ai_data.jsonl"

@@ -1,13 +1,12 @@
-import os
-import json
 import asyncio
-import re
-from tqdm.asyncio import tqdm
+import json
+import logging
+import os
+import sys
+
 import google.generativeai as genai
 from dotenv import load_dotenv
-import time
-import logging
-import sys
+from tqdm.asyncio import tqdm
 
 # Pillar 6: Secure Observability
 logging.basicConfig(
@@ -146,5 +145,5 @@ if __name__ == "__main__":
         loop.run_until_complete(process_batch(SUMMARIES_FILE, AI_DATA_FILE, generate_prompt, "Generating"))
     except KeyboardInterrupt:
         logger.info("System shutdown initiated by administrator.")
-    except Exception as e:
-        logger.critical(f"Panic: System-wide failure in generation pipeline.")
+    except Exception:
+        logger.critical("Panic: System-wide failure in generation pipeline.")

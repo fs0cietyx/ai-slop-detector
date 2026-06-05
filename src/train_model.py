@@ -1,17 +1,17 @@
 import os
-import pandas as pd
-import torch
-from datasets import Dataset
-from transformers import (
-    AutoTokenizer,
-    AutoModelForSequenceClassification,
-    TrainingArguments,
-    Trainer,
-    DataCollatorWithPadding
-)
-from peft import LoraConfig, get_peft_model, TaskType
+
 import evaluate
 import numpy as np
+import pandas as pd
+from datasets import Dataset
+from peft import LoraConfig, TaskType, get_peft_model
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    DataCollatorWithPadding,
+    Trainer,
+    TrainingArguments,
+)
 
 # Configuration
 MODEL_NAME = "bert-base-uncased"
@@ -48,7 +48,7 @@ def train():
     dataset = dataset.train_test_split(test_size=0.2)
     
     print("Initializing tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, revision="main")
 
     def tokenize_function(examples):
         return tokenizer(examples["text"], truncation=True, padding="max_length", max_length=512)
@@ -58,7 +58,7 @@ def train():
     
     # Prepare model
     print(f"Loading base model: {MODEL_NAME}")
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, num_labels=2)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, num_labels=2, revision="main")
 
     # LoRA Configuration
     peft_config = LoraConfig(

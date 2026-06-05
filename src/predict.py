@@ -1,6 +1,7 @@
 import sys
-from src.core.engine import InferenceEngine
+
 from src.core.config import get_logger
+from src.core.engine import InferenceEngine
 
 logger = get_logger(__name__)
 
@@ -28,7 +29,7 @@ def main() -> None:
         print("═"*50)
         print(f" CLASSIFICATION : {label}")
         print(f" CONFIDENCE     : {confidence:.4%}")
-        print(f" STATUS         : VERIFIED_INFERENCE")
+        print(" STATUS         : VERIFIED_INFERENCE")
         print("═"*50 + "\n")
 
     except KeyboardInterrupt:
