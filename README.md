@@ -1,4 +1,4 @@
-# AI Slop Detector: Enterprise-Grade Text Classifier
+# AI Slop Detector: Text Classifier
 
 [![Security Audit](https://github.com/fs0cietyx/ai-slop-detector/actions/workflows/main.yml/badge.svg)](https://github.com/fs0cietyx/ai-slop-detector/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
