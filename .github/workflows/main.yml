@@ -1,0 +1,39 @@
+name: Production CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  hardening:
+    name: Security & Quality Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy bandit requirements-detector
+          pip install -r requirements.txt
+
+      - name: 🚨 Ruff (Linting & Formatting)
+        run: ruff check .
+
+      - name: 🧠 Mypy (Static Typing Audit)
+        run: mypy --strict src/core src/predict.py
+
+      - name: 🕵️ Bandit (SAST Security Scan)
+        run: bandit -r src/
+
+      - name: 🧪 Unit Tests
+        run: |
+          pip install pytest
+          pytest tests/

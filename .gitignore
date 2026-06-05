@@ -1,0 +1,22 @@
+# Secrets
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+ENV/
+
+# Project Data
+data/
+logs/
+models/
+*.log
+nohup.out
+
+# OS
+.DS_Store
+Thumbs.db
