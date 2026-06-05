@@ -34,7 +34,6 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Copy python packages from builder
 COPY --from=builder /root/.local /home/slopbot/.local
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # [AppSec] Infrastructure Isolation: Copy only necessary source code
 COPY src/ src/
