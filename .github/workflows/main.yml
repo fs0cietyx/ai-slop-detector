@@ -9,6 +9,8 @@ on:
 jobs:
   security-and-quality:
     runs-on: ubuntu-latest
+    env:
+      APP_ENV: development
     
     steps:
     - name: "Checkout code"
