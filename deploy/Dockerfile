@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --user --no-warn-script-location -r requirements.txt
+RUN pip install --user --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --user --no-warn-script-location -r requirements.txt
 
 # --- Stage 2: Production ---
 FROM python:3.11-slim AS runtime
@@ -27,6 +28,9 @@ LABEL maintainer="AI Slop Detector Team" \
 RUN groupadd -r slopbot && useradd -r -g slopbot -s /sbin/nologin slopbot
 
 WORKDIR /app
+
+# [AppSec] Mitigate vulnerabilities in base image packages
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Copy python packages from builder
 COPY --from=builder /root/.local /home/slopbot/.local

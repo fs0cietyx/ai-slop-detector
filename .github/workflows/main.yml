@@ -53,7 +53,7 @@ jobs:
       run: docker build -t ai-slop-detector:latest -f deploy/Dockerfile .
 
     - name: "[AppSec] Container Security Scan (Trivy)"
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@v0.28.0
       with:
         image-ref: 'ai-slop-detector:latest'
         format: 'table'
