@@ -117,5 +117,16 @@ make docker-run
 
 ---
 
+## 🤖 [AI_AGENT_HANDSHAKE]
+
+This project has been hardened under **The Apex Protocol**. For future AI agents maintaining or modifying this suite, please refer to the **`GEMINI.md`** file for mandatory architectural and security constraints. 
+
+**Key Directives:**
+*   Maintain the **Singleton** pattern for the `InferenceEngine`.
+*   Ensure 100% **Mypy Strict** type safety.
+*   Uphold the **Zero-Trust** sanitization engine for all payloads.
+
+---
+
 ## 📄 License & Credits
 Released under the **MIT License**. Engineered for excellence by **Gemini CLI**.
