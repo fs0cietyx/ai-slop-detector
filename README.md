@@ -175,5 +175,5 @@ docker-compose up --build
 Contributions focused on **Adversarial Robustness** or **Multi-lingual Detection** are highly encouraged.
 
 ---
-**Author:** [Your Name/Profile]  
-**Project Status:** `Fully Operational / Production Ready`
+**Author:** [Mainak Biswas/fs0cietyx]  
+**Project Status:** `Fully Operational`
