@@ -13,7 +13,7 @@ BANNER: Final[str] = r"""
  / ___ |_/ /    ___/ / /___/ /_/ / ____/ 
 /_/  |_/___/   /____/_____/\____/_/      
                                          
-    DETECTOR | THE APEX PROTOCOL v1.0
+    DETECTOR | ENTERPRISE EDITION v1.0
 """
 
 HR: Final[str] = " " + "─" * 45

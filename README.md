@@ -56,12 +56,55 @@ The model was trained on the **RAID dataset**, a premier benchmark for AI detect
 ### 🖼️ Visual Insights
 
 #### 1. Cinematic CLI Output
-The system features a high-fidelity visual reporting interface that provides real-time telemetry, including hardware context and confidence intervals.
-![Inference Report](./benchmarks/inference_sample.png)
+The system features a high-fidelity visual reporting interface that provides real-time telemetry, hardware context, and confidence intervals directly in the terminal.
 
-#### 2. Training Dynamics
-Performance logs showing loss convergence and accuracy metrics across diverse domains (Wikipedia human data vs. AI-generated variants).
-![Training Curve](./benchmarks/training_metrics.png)
+```shell
+    ___    ____   _____ __    ____  ____ 
+   /   |  /  _/  / ___// /   / __ \/ __ \
+  / /| |  / /    \__ \/ /   / / / / /_/ /
+ / ___ |_/ /    ___/ / /___/ /_/ / ____/ 
+/_/  |_/___/   /____/_____/\____/_/      
+                                         
+    DETECTOR | ENTERPRISE EDITION v1.0
+ ─────────────────────────────────────────────
+ ● INITIALIZING_INFERENCE_ENGINE...
+ ● ANALYZING_TEXT_VECTORS...
+ ─────────────────────────────────────────────
+  IDENTIFICATION : AI-GENERATED (SLOP)
+  CONFIDENCE     : 98.42%
+  COMPUTE_TIME   : 142.15ms
+  HW_CONTEXT     : MPS
+ ─────────────────────────────────────────────
+ [✓] INFERENCE_AUDIT_COMPLETE
+```
+
+---
+
+## ⚙️ How It Works
+
+The **ai-slop-detector** operates on a deep linguistic analysis framework that focuses on "Statistical Fingerprinting."
+
+### The Detection Logic
+1.  **Sanitization:** The input text is stripped of hidden control characters and normalized for consistent tokenization.
+2.  **Vectorization:** Text is converted into high-dimensional vectors using a transformer-based encoder (BERT-based).
+3.  **Pattern Recognition:** The model analyzes "Perplexity" and "Burstiness"—AI-generated text typically shows a "flatter" statistical distribution with higher predictability compared to human creative writing.
+4.  **Hardware-Accelerated Inference:** The system dynamically selects the most efficient hardware (Metal/MPS for Mac, CUDA for NVIDIA) to ensure sub-200ms response times.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Engine
+    participant HW as Hardware (MPS/CUDA)
+    
+    User->>CLI: Input Text Payload
+    CLI->>Engine: Sanitize & Tokenize
+    Engine->>HW: Load Vector Tensors
+    HW-->>Engine: Compute Probability Map
+    Engine->>Engine: Calculate Confidence Score
+    Engine-->>CLI: Identification Label
+    CLI-->>User: Visual Audit Report
+```
 
 ### Key Technical Discovery
 The pipeline identifies specific "statistical fingerprints" left behind by LLMs. Notable findings include:
