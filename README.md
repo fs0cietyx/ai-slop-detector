@@ -11,7 +11,7 @@
 
 ## 🌟 Overview
 
-**SlopGuard-ML** is a specialized detection framework engineered to distinguish between human-authored nuances and the algorithmic patterns of AI-generated content. Originally developed to protect digital ecosystems from low-quality automated "slop," this suite provides a full-stack solution—from high-scale dataset crawling and adversarial training to real-time inference via a cinematic CLI.
+**SlopGuard-ML** is a specialized detection framework engineered to distinguish between human-authored nuances and the algorithmic patterns of AI-generated content. Originally developed to protect digital ecosystems from low-quality automated "slop," this suite provides a full-stack solution from high-scale dataset crawling and adversarial training to real-time inference via a cinematic CLI.
 
 ### 🎯 Real-Life Impact
 *   **Academic Integrity:** Validates student submissions by detecting deep-level linguistic artifacts unique to Large Language Models.
