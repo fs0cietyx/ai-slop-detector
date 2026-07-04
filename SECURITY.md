@@ -6,7 +6,7 @@ This project adheres to a **Zero-Trust Security Model**. Every component is desi
 ## Enforced Security Pillars
 
 ### 1. Secrets Management
-- **Zero Exposure**: API keys and credentials are never hardcoded. 
+- **Zero Exposure**: API keys and credentials are never hardcoded.
 - **Environment Isolation**: Strictly use `.env` files (excluded from VCE via `.gitignore`).
 - **Placeholder Protection**: The repository contains only placeholder templates for secrets.
 
@@ -15,7 +15,7 @@ This project adheres to a **Zero-Trust Security Model**. Every component is desi
 - **Type Checking**: All functions processing user-supplied or external data (Crawler, Generator) implement strict type and content verification.
 
 ### 3. Anti-Abuse & Bot Mitigation
-- **Crawler Guardrails**: 
+- **Crawler Guardrails**:
     - `Content-Type` verification to prevent processing of non-HTML blobs.
     - `MAX_SIZE` limits (1MB) per page to mitigate resource amplification attacks.
     - Explicit `User-Agent` and citizen-friendly rate limiting (0.5s - 1.0s delay).

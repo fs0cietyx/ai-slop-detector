@@ -41,14 +41,14 @@ class InferenceEngine:
     def __init__(self) -> None:
         """
         Initializes the engine with lazy asset mounting.
-        
+
         Ensures hardware acceleration is utilized where available (CUDA/MPS/CPU).
         """
         if getattr(self, "_initialized", False):
             return
 
         self._device = self._select_device()
-        
+
         try:
             self._tokenizer, self._model = self._load_assets()
             self._initialized = True
@@ -69,7 +69,7 @@ class InferenceEngine:
     def _load_assets(self) -> Tuple[PreTrainedTokenizer, PreTrainedModel]:
         """
         Securely loads model weights and tokenizers.
-        
+
         Implements integrity checks for model paths and handles PEFT (LoRA) integration.
         """
         if not os.path.exists(config.ADAPTER_PATH):
@@ -77,30 +77,30 @@ class InferenceEngine:
 
         # Strict revision pinning for supply chain security
         tokenizer = AutoTokenizer.from_pretrained(config.MODEL_NAME, revision="main")  # nosec: B615
-        
+
         base_model = AutoModelForSequenceClassification.from_pretrained(  # nosec: B615
-            config.MODEL_NAME, 
+            config.MODEL_NAME,
             num_labels=len(self.LABEL_MAP),
             device_map=None,  # Explicitly managed by engine
-            revision="main"
+            revision="main",
         )
 
         # Mount LoRA adapters into the base model architecture
         model = PeftModel.from_pretrained(base_model, config.ADAPTER_PATH)
         model.to(self._device)
         model.eval()
-        
+
         return cast(PreTrainedTokenizer, tokenizer), cast(PreTrainedModel, model)
 
     def _sanitize_payload(self, text: str) -> str:
         """
         Input Sanitization.
-        
+
         Neutralizes malformed Unicode, control characters, and resource-exhaustion payloads.
         """
         # Enforce strict character limits before processing to prevent CPU/RAM abuse
         text = text.strip()[: config.MAX_INPUT_CHARS]
-        
+
         # Strip control characters except basic whitespace/newlines
         return "".join(char for char in text if ord(char) >= 32 or char in "\n\r\t")
 
@@ -116,7 +116,7 @@ class InferenceEngine:
             Tuple[str, float]: Standardized classification label and softmax confidence.
         """
         clean_text = self._sanitize_payload(text)
-        
+
         if not clean_text:
             return "PAYLOAD_INVALID", 0.0
 

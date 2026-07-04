@@ -7,50 +7,52 @@ from slopguard.core.engine import InferenceEngine
 
 # --- CLI Components ---
 BANNER: Final[str] = r"""
-    ___    ____   _____ __    ____  ____ 
+    ___    ____   _____ __    ____  ____
    /   |  /  _/  / ___// /   / __ \/ __ \
   / /| |  / /    \__ \/ /   / / / / /_/ /
- / ___ |_/ /    ___/ / /___/ /_/ / ____/ 
-/_/  |_/___/   /____/_____/\____/_/      
-                                         
+ / ___ |_/ /    ___/ / /___/ /_/ / ____/
+/_/  |_/___/   /____/_____/\____/_/
+
     DETECTOR | ENTERPRISE EDITION v1.0
 """
 
 HR: Final[str] = " " + "─" * 45
 GLOW_DOT: Final[str] = "●"
 
+
 def print_ui_header() -> None:
     """Renders the CLI banner."""
     print("\033[1;36m" + BANNER + "\033[0m")
     print(f"\033[1;30m{HR}\033[0m")
 
+
 def run_cli() -> None:
     """
     Enterprise CLI Entrypoint for AI Slop Detection.
-    
+
     Implements visual reporting and hardware acceleration logs.
     """
     if len(sys.argv) < 2:
         print_ui_header()
         print("\n \033[1;33m[!] USAGE:\033[0m")
-        print(" python -m src.predict \"Your payload here...\"\n")
+        print(' python -m src.predict "Your payload here..."\n')
         sys.exit(0)
 
     payload = sys.argv[1]
     print_ui_header()
-    
+
     try:
         # [Visual Flow] Simulated system check
         print(f" \033[1;34m{GLOW_DOT}\033[0m INITIALIZING_INFERENCE_ENGINE...")
-        
+
         start_time = time.time()
-        
+
         # Singleton engine initialization (hardware detection happens here)
         engine = InferenceEngine()
-        
+
         print(f" \033[1;34m{GLOW_DOT}\033[0m ANALYZING_TEXT_VECTORS...")
         label, confidence = engine.predict(payload)
-        
+
         latency_ms = (time.time() - start_time) * 1000
 
         # --- Visual Inference Report ---
@@ -63,7 +65,7 @@ def run_cli() -> None:
         print(f"  \033[1;37mCOMPUTE_TIME   :\033[0m \033[1;34m{latency_ms:.2f}ms\033[0m")
         print(f"  \033[1;37mHW_CONTEXT     :\033[0m \033[1;35m{engine._device.type.upper()}\033[0m")
         print(f"\033[1;30m{HR}\033[0m")
-        
+
         # Bottom decorative bar
         print(" \033[1;32m[✓]\033[0m INFERENCE_AUDIT_COMPLETE\n")
 

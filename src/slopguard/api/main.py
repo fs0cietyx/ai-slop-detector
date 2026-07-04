@@ -22,8 +22,11 @@ app = FastAPI(
 # [AppSec] Rate Limiting: Handle abuse at the middleware level
 app.state.limiter = limiter
 app.add_exception_handler(
-    RateLimitExceeded, 
-    cast(Callable[[Request, Exception], Union[Response, Awaitable[Response]]], _rate_limit_exceeded_handler)
+    RateLimitExceeded,
+    cast(
+        Callable[[Request, Exception], Union[Response, Awaitable[Response]]],
+        _rate_limit_exceeded_handler,
+    ),
 )
 
 # [AppSec] CORS Hardening: In production, this should be restricted to specific origins
@@ -42,17 +45,21 @@ engine = InferenceEngine()
 # --- Pydantic Schemas (Pillar IV: Defensive Programming) ---
 class DetectionRequest(BaseModel):
     """Secure request schema for text analysis."""
+
     text: str = Field(..., min_length=10, max_length=config.MAX_INPUT_CHARS)
 
     model_config = {
         "json_schema_extra": {
-            "example": {"text": "This is a sample text that could be human-written or AI-generated."}
+            "example": {
+                "text": "This is a sample text that could be human-written or AI-generated."
+            }
         }
     }
 
 
 class DetectionResponse(BaseModel):
     """Standardized enterprise response schema."""
+
     label: str
     confidence: float
     status: str = "SUCCESS"
@@ -62,6 +69,7 @@ class DetectionResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """System health schema."""
+
     status: str
     version: str
     engine_online: bool
@@ -69,14 +77,16 @@ class HealthResponse(BaseModel):
 
 # --- Middleware: Security Audit ---
 @app.middleware("http")
-async def audit_middleware(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+async def audit_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     """
     Structured logging and security checks for every request.
     """
     start_time = time.time()
     response = await call_next(request)
     process_time = (time.time() - start_time) * 1000
-    
+
     logger.info(
         f"API_AUDIT: method={request.method} path={request.url.path} "
         f"status={response.status_code} latency={process_time:.2f}ms"
@@ -95,20 +105,16 @@ async def health_check() -> Dict[str, Any]:
     }
 
 
-@app.post(
-    "/v1/predict", 
-    response_model=DetectionResponse, 
-    status_code=status.HTTP_200_OK
-)
+@app.post("/v1/predict", response_model=DetectionResponse, status_code=status.HTTP_200_OK)
 @limiter.limit(config.RATE_LIMIT_DEFAULT)
 async def predict_text(
     request: Request,
     payload: DetectionRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-KEY")
+    x_api_key: Optional[str] = Header(None, alias="X-API-KEY"),
 ) -> DetectionResponse:
     """
     Secure inference endpoint for AI slop detection.
-    
+
     Adheres to Pillar II (Resource Discipline) and Pillar V (Abuse Prevention).
     """
     # [AppSec] Zero-Trust Auth: Simple header check (can be upgraded to JWT/OAuth)
@@ -120,18 +126,14 @@ async def predict_text(
         )
 
     start_time = time.time()
-    
+
     try:
         # [Optimization] Offload heavy compute to the engine
         label, confidence = engine.predict(payload.text)
-        
+
         latency = (time.time() - start_time) * 1000
-        
-        return DetectionResponse(
-            label=label,
-            confidence=confidence,
-            latency_ms=round(latency, 2)
-        )
+
+        return DetectionResponse(label=label, confidence=confidence, latency_ms=round(latency, 2))
 
     except Exception as e:
         logger.error(f"API_INFERENCE_FAILURE: {str(e)}")
@@ -144,4 +146,5 @@ async def predict_text(
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host=config.HOST, port=config.PORT)

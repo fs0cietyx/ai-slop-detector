@@ -2,7 +2,7 @@
 
 ## 1. Wikipedia as Primary Human Source
 - **Decision**: Use Wikipedia for the human-written text dataset.
-- **Rationale**: Easy-to-use API, linked structure simplifies crawling, and provides a "stable" genre for the proof of concept. 
+- **Rationale**: Easy-to-use API, linked structure simplifies crawling, and provides a "stable" genre for the proof of concept.
 - **Revisit**: When moving beyond POC to a multi-domain detector.
 
 ## 2. Two-Pass AI Generation (Summary -> Paragraph)

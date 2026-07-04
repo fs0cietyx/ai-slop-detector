@@ -59,12 +59,12 @@ The model was trained on the **RAID dataset**, a premier benchmark for AI detect
 The system features a reporting interface that provides real-time logs, hardware context, and confidence intervals directly in the terminal.
 
 ```shell
-    ___    ____   _____ __    ____  ____ 
+    ___    ____   _____ __    ____  ____
    /   |  /  _/  / ___// /   / __ \/ __ \
   / /| |  / /    \__ \/ /   / / / / /_/ /
- / ___ |_/ /    ___/ / /___/ /_/ / ____/ 
-/_/  |_/___/   /____/_____/\____/_/      
-                                         
+ / ___ |_/ /    ___/ / /___/ /_/ / ____/
+/_/  |_/___/   /____/_____/\____/_/
+
     DETECTOR | ENTERPRISE EDITION v1.0
  ─────────────────────────────────────────────
  ● INITIALIZING_INFERENCE_ENGINE...
@@ -96,7 +96,7 @@ sequenceDiagram
     participant CLI
     participant Engine
     participant HW as Hardware (MPS/CUDA)
-    
+
     User->>CLI: Input Text Payload
     CLI->>Engine: Sanitize & Tokenize
     Engine->>HW: Load Vector Tensors
@@ -176,5 +176,5 @@ docker-compose up --build
 Contributions focused on **Adversarial Robustness** or **Multi-lingual Detection** are highly encouraged.
 
 ---
-**Author:** [Mainak Biswas/fs0cietyx]  
+**Author:** [Mainak Biswas/fs0cietyx]
 **Project Status:** `Fully Operational`

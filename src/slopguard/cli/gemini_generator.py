@@ -5,9 +5,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
 
 import google.generativeai as genai
-from tqdm.asyncio import tqdm
-
 from slopguard.core.config import config, logger
+from tqdm.asyncio import tqdm
 
 
 @dataclass(frozen=True)
@@ -30,14 +29,14 @@ class AIGenerator:
 
     def __init__(self) -> None:
         self.config = GeneratorConfig()
-        
+
         # [AppSec] Secrets Isolation: Ensure key is extracted from SecretStr container
         if not config.GEMINI_API_KEY:
             raise RuntimeError("CRITICAL_SECURITY_FAILURE: GEMINI_API_KEY not configured.")
-        
+
         try:
-            genai.configure(api_key=config.GEMINI_API_KEY.get_secret_value())  # type: ignore[attr-defined]
-            self.model = genai.GenerativeModel(self.config.model_name)  # type: ignore[attr-defined]
+            genai.configure(api_key=config.GEMINI_API_KEY.get_secret_value())
+            self.model = genai.GenerativeModel(self.config.model_name)
             logger.info(f"AIGenerator online. Architecture: {self.config.model_name}")
         except Exception as e:
             logger.critical(f"API_CONNECTION_FAILURE: Gemini handshake failed: {str(e)}")
@@ -49,15 +48,15 @@ class AIGenerator:
         """
         # [AppSec] Payload Hardening: Enforce strict char limits before LLM egress
         sanitized_prompt = prompt.strip()[: config.MAX_INPUT_CHARS]
-        
+
         async with semaphore:
             try:
                 # [Optimization] Non-blocking thread-pool execution for synchronous SDK
                 response = await asyncio.to_thread(self.model.generate_content, sanitized_prompt)
-                
+
                 if not response or not hasattr(response, "text"):
                     return None
-                    
+
                 result = str(response.text).strip()
                 return result if len(result) > 50 else None
 
@@ -88,7 +87,8 @@ class AIGenerator:
                 for line in f:
                     try:
                         processed_sources.add(json.loads(line)["source"])
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(f"JSON parse error on processed: {e}")
                         continue
 
         items: List[Dict[str, Any]] = []
@@ -98,7 +98,8 @@ class AIGenerator:
                     data = json.loads(line)
                     if data.get("source") not in processed_sources:
                         items.append(data)
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"JSON parse error on input: {e}")
                     continue
 
         if not items:
@@ -107,10 +108,9 @@ class AIGenerator:
 
         logger.info(f"PIPELINE_START: {mode} ({len(items)} records)")
         semaphore = asyncio.Semaphore(self.config.max_concurrent_tasks)
-        
+
         prompt_template = (
-            self.config.summary_prompt if "summary" in mode.lower() 
-            else self.config.generate_prompt
+            self.config.summary_prompt if "summary" in mode.lower() else self.config.generate_prompt
         )
 
         with open(output_file, "a", encoding="utf-8") as f:
@@ -132,27 +132,24 @@ class AIGenerator:
                         output_record["summary"] = result
                     else:
                         output_record["text"] = result
-                    
+
                     f.write(json.dumps(output_record) + "\n")
 
 
 async def run_pipeline() -> None:
     """Orchestrates the two-stage synthetic data generation pipeline."""
     gen = AIGenerator()
-    
+
     # Stage 1: Facts Extraction (Summarization)
     await gen.process_pipeline(
-        input_file="data/human_data.jsonl",
-        output_file="data/summaries.jsonl",
-        mode="summarization"
+        input_file="data/human_data.jsonl", output_file="data/summaries.jsonl", mode="summarization"
     )
-    
+
     # Stage 2: Slop Generation (Re-writing)
     await gen.process_pipeline(
-        input_file="data/summaries.jsonl",
-        output_file="data/ai_data.jsonl",
-        mode="generation"
+        input_file="data/summaries.jsonl", output_file="data/ai_data.jsonl", mode="generation"
     )
+
 
 if __name__ == "__main__":
     try:

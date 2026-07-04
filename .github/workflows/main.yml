@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_ENV: development
-    
+
     steps:
     - name: "Checkout code"
       uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
     steps:
     - name: "Checkout code"
       uses: actions/checkout@v4
-    
+
     - name: "Build Docker Image"
       run: docker build -t ai-slop-detector:latest -f deploy/Dockerfile .
 

@@ -30,7 +30,9 @@ class AppConfig(BaseSettings):
 
     # --- ML Engine Settings ---
     # Resource Discipline: Strict bounds on input sizes
-    MODEL_NAME: str = Field(default="bert-base-uncased", description="Base transformer architecture")
+    MODEL_NAME: str = Field(
+        default="bert-base-uncased", description="Base transformer architecture"
+    )
     ADAPTER_PATH: str = Field(
         default="models/ai-slop-detector-v1", description="Path to LoRA weights"
     )
@@ -80,7 +82,7 @@ config = AppConfig()
 def setup_logging() -> logging.Logger:
     """
     Configures enterprise-standard structured logging.
-    
+
     Prevents leakage of sensitive metadata while ensuring actionable logs.
     """
     logger = logging.getLogger(config.APP_NAME)

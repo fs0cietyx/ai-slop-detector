@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 from datasets import Dataset
 from peft import LoraConfig, TaskType, get_peft_model
+from slopguard.core.config import config, logger
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -14,8 +15,6 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
-
-from slopguard.core.config import config, logger
 
 
 def compute_metrics(eval_pred: Any) -> Dict[str, float]:
@@ -41,7 +40,7 @@ def run_training() -> None:
     Adheres to Pillar II (ML Optimization) and Pillar IV (Defensive Programming).
     """
     data_path = "data/training_dataset.csv"
-    
+
     if not os.path.exists(data_path):
         logger.error(f"TRAINING_HALTED: Dataset missing at {data_path}")
         return
@@ -52,7 +51,7 @@ def run_training() -> None:
     try:
         df = pd.read_csv(data_path)
         df["text"] = df["text"].astype(str)
-        
+
         # Ensure label integrity
         df = df[df["label"].isin([0, 1])]
     except Exception as e:
@@ -68,10 +67,10 @@ def run_training() -> None:
 
     def tokenize_fn(examples: Dict[str, Any]) -> Any:
         return tokenizer(
-            examples["text"], 
-            truncation=True, 
-            padding="max_length", 
-            max_length=config.MAX_INPUT_LENGTH
+            examples["text"],
+            truncation=True,
+            padding="max_length",
+            max_length=config.MAX_INPUT_LENGTH,
         )
 
     logger.info("Tokenizing multi-domain dataset...")
@@ -80,9 +79,7 @@ def run_training() -> None:
     # Model Preparation
     logger.info(f"Loading Base Architecture: {config.MODEL_NAME}")
     base_model = AutoModelForSequenceClassification.from_pretrained(  # nosec: B615
-        config.MODEL_NAME, 
-        num_labels=2,
-        revision="main"
+        config.MODEL_NAME, num_labels=2, revision="main"
     )
 
     # [Optimization] LoRA (Low-Rank Adaptation) Configuration

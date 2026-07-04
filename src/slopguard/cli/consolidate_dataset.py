@@ -3,7 +3,6 @@ import os
 from typing import Any, Dict, List
 
 import pandas as pd
-
 from slopguard.core.config import logger
 
 
@@ -32,13 +31,16 @@ def run_consolidation() -> None:
                     item = json.loads(line)
                     text = item.get("text")
                     if text and isinstance(text, str) and len(text) > 100:
-                        records.append({
-                            "text": text.strip(),
-                            "label": expected_label,
-                            "source_origin": item.get("source", "unknown")
-                        })
+                        records.append(
+                            {
+                                "text": text.strip(),
+                                "label": expected_label,
+                                "source_origin": item.get("source", "unknown"),
+                            }
+                        )
                         count += 1
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Failed to parse line: {e}")
                     continue
         return count
 
@@ -56,7 +58,7 @@ def run_consolidation() -> None:
 
     # [Optimization] Performance-aware DataFrame conversion
     df = pd.DataFrame(records)
-    
+
     # [AppSec] Integrity: Shuffle dataset to prevent bias during epoch boundaries
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 

@@ -8,9 +8,8 @@ from typing import List, Optional, Set, Tuple
 
 import httpx
 from bs4 import BeautifulSoup, Tag
-from tqdm.asyncio import tqdm
-
 from slopguard.core.config import logger
+from tqdm.asyncio import tqdm
 
 
 @dataclass(frozen=True)
@@ -49,23 +48,23 @@ class AsyncCrawler:
     def _sanitize_text(self, text: str) -> Optional[str]:
         """
         Refined text sanitization and quality filtering.
-        
+
         Eliminates citations, LaTeX noise, and low-entropy sequences.
         """
         # Remove Wikipedia citations like [1], [23], [citation needed]
         text = re.sub(r"\[[0-9a-zA-Z\s]+\]", "", text)
-        
+
         # Neutralize Potential Exploit Patterns (LaTeX injections, script tags)
         if any(p in text.lower() for p in ["{\displaystyle", "<script", "eval("]):
             return None
 
         clean = text.strip()
         words = clean.split()
-        
+
         # Entropy filter: Ensure text is substantial enough for ML training
         if len(words) < 25 or len(words) > 800:
             return None
-            
+
         return clean
 
     async def _fetch_page(self, client: httpx.AsyncClient, url: str) -> Tuple[List[str], List[str]]:
@@ -95,7 +94,7 @@ class AsyncCrawler:
                         return [], []
 
                 soup = BeautifulSoup(content, "html.parser")
-                
+
                 # Extract clean paragraphs
                 paragraphs: List[str] = []
                 main_content = soup.find(class_="mw-parser-output")
@@ -113,7 +112,7 @@ class AsyncCrawler:
                         links.append(self.config.base_url + href)
                         if len(links) >= 100:  # Bound BFS branching factor
                             break
-                
+
                 return paragraphs, links
 
         except Exception as e:
@@ -123,8 +122,10 @@ class AsyncCrawler:
     async def _worker(self, worker_id: int, pbar: tqdm) -> None:
         """Concurrent worker processing the crawl queue."""
         headers = {"User-Agent": self.config.user_agent}
-        
-        async with httpx.AsyncClient(headers=headers, timeout=self.config.request_timeout) as client:
+
+        async with httpx.AsyncClient(
+            headers=headers, timeout=self.config.request_timeout
+        ) as client:
             while self.collected_count < self.config.target_count:
                 try:
                     url = await asyncio.wait_for(self.queue.get(), timeout=5.0)
@@ -143,14 +144,14 @@ class AsyncCrawler:
                     async with self._lock:
                         remaining = self.config.target_count - self.collected_count
                         to_save = paragraphs[: min(len(paragraphs), 3, remaining)]
-                        
+
                         with open(self.output_file, "a", encoding="utf-8") as f:
                             for p in to_save:
                                 record = {
                                     "text": p,
                                     "source": url,
                                     "label": 0,
-                                    "metadata": {"crawler": "AsyncCrawler/1.0"}
+                                    "metadata": {"crawler": "AsyncCrawler/1.0"},
                                 }
                                 f.write(json.dumps(record) + "\n")
                                 self.collected_count += 1
@@ -163,14 +164,14 @@ class AsyncCrawler:
                         await self.queue.put(link_url)
 
                 self.queue.task_done()
-                
+
                 # Ethical Scraping: Rate limiting
                 await asyncio.sleep(0.5)
 
     async def run(self, num_workers: int = 10) -> None:
         """Orchestrates the asynchronous crawl lifecycle."""
         logger.info(f"Initiating Secure Crawl: Target={self.config.target_count}")
-        
+
         # Resume sequence
         if os.path.exists(self.output_file):
             with open(self.output_file, "r") as f:
@@ -180,7 +181,9 @@ class AsyncCrawler:
         for seed in self.config.seeds:
             await self.queue.put(seed)
 
-        with tqdm(total=self.config.target_count, initial=self.collected_count, desc="DATA_CRAWL") as pbar:
+        with tqdm(
+            total=self.config.target_count, initial=self.collected_count, desc="DATA_CRAWL"
+        ) as pbar:
             workers = [asyncio.create_task(self._worker(i, pbar)) for i in range(num_workers)]
             await asyncio.gather(*workers)
 
