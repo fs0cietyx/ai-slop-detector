@@ -4,10 +4,9 @@ import os
 import warnings
 from typing import Any, Dict, List
 
-from tqdm import tqdm
-
 # Pillar I: Modularity - Use absolute imports for reliability
 from slopguard.core.engine import InferenceEngine
+from tqdm import tqdm
 
 # Pillar VI: Secure Observability
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"

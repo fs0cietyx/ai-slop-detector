@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-
 from slopguard.cli.train_model import compute_metrics, run_training
 
 

@@ -13,7 +13,7 @@ The API listens on `http://127.0.0.1:8000` by default.
 
 ## Authentication
 
-All endpoints (except health checks) require an API key to be passed via the `X-API-KEY` HTTP header. 
+All endpoints (except health checks) require an API key to be passed via the `X-API-KEY` HTTP header.
 
 By default, the required key in production is `sk_dev_super_secret_999`.
 
