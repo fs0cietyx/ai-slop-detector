@@ -1,10 +1,9 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from slopguard.api.main import app
-from slopguard.core.config import config
+from slopguard.core.config import Environment, config
 from slopguard.core.engine import InferenceEngine
 
 client = TestClient(app)
@@ -25,8 +24,10 @@ def test_predict_success() -> None:
     with patch.object(InferenceEngine, "predict", return_value=("AI-GENERATED", 0.95)):
         response = client.post(
             "/v1/predict",
-            json={"text": "This is a sufficiently long payload to pass the validation constraints."},
-            headers={"X-API-KEY": config.API_KEY_INTERNAL.get_secret_value()}
+            json={
+                "text": "This is a sufficiently long payload to pass the validation constraints."
+            },
+            headers={"X-API-KEY": config.API_KEY_INTERNAL.get_secret_value()},
         )
         assert response.status_code == 200
         data = response.json()
@@ -41,7 +42,7 @@ def test_predict_invalid_payload() -> None:
     response = client.post(
         "/v1/predict",
         json={"text": "Too short"},
-        headers={"X-API-KEY": config.API_KEY_INTERNAL.get_secret_value()}
+        headers={"X-API-KEY": config.API_KEY_INTERNAL.get_secret_value()},
     )
     assert response.status_code == 422  # Unprocessable Entity (Pydantic Validation)
 
@@ -50,12 +51,14 @@ def test_predict_unauthorized_in_production() -> None:
     """Test API enforces authentication in production mode."""
     # Temporarily set ENV to production
     original_env = config.ENV
-    config.ENV = "production"
-    
+    config.ENV = Environment.PRODUCTION
+
     try:
         response = client.post(
             "/v1/predict",
-            json={"text": "This is a sufficiently long payload to pass the validation constraints."},
+            json={
+                "text": "This is a sufficiently long payload to pass the validation constraints."
+            },
             # Missing X-API-KEY header
         )
         assert response.status_code == 401
@@ -68,8 +71,10 @@ def test_predict_internal_error() -> None:
     with patch.object(InferenceEngine, "predict", side_effect=Exception("Critical engine failure")):
         response = client.post(
             "/v1/predict",
-            json={"text": "This is a sufficiently long payload to pass the validation constraints."},
-            headers={"X-API-KEY": config.API_KEY_INTERNAL.get_secret_value()}
+            json={
+                "text": "This is a sufficiently long payload to pass the validation constraints."
+            },
+            headers={"X-API-KEY": config.API_KEY_INTERNAL.get_secret_value()},
         )
         assert response.status_code == 500
         assert "internal error" in response.json()["detail"].lower()

@@ -5,8 +5,9 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
 
 import google.generativeai as genai
-from slopguard.core.config import config, logger
 from tqdm.asyncio import tqdm
+
+from slopguard.core.config import config, logger
 
 
 @dataclass(frozen=True)
