@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 from tqdm import tqdm
 
 # Pillar I: Modularity - Use absolute imports for reliability
-from .core.engine import InferenceEngine
+from slopguard.core.engine import InferenceEngine
 
 # Pillar VI: Secure Observability
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"

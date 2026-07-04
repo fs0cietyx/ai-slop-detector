@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from .core.config import logger
+from slopguard.core.config import logger
 
 
 def run_consolidation() -> None:

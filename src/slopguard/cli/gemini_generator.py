@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Set
 import google.generativeai as genai
 from tqdm.asyncio import tqdm
 
-from .core.config import config, logger
+from slopguard.core.config import config, logger
 
 
 @dataclass(frozen=True)

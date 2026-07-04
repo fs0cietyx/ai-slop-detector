@@ -15,7 +15,7 @@ from transformers import (
     TrainingArguments,
 )
 
-from .core.config import config, logger
+from slopguard.core.config import config, logger
 
 
 def compute_metrics(eval_pred: Any) -> Dict[str, float]:

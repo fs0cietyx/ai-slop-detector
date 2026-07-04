@@ -2,8 +2,8 @@ import sys
 import time
 from typing import Final
 
-from .core.config import logger
-from .core.engine import InferenceEngine
+from slopguard.core.config import logger
+from slopguard.core.engine import InferenceEngine
 
 # --- Cinematic UI Components ---
 BANNER: Final[str] = r"""

@@ -10,7 +10,7 @@ import httpx
 from bs4 import BeautifulSoup, Tag
 from tqdm.asyncio import tqdm
 
-from .core.config import logger
+from slopguard.core.config import logger
 
 
 @dataclass(frozen=True)
