@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-
 from slopguard.api.main import app
 from slopguard.core.config import Environment, config
 from slopguard.core.engine import InferenceEngine
