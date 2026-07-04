@@ -1,7 +1,8 @@
 from unittest.mock import patch
 
-from slopguard.cli.main import app
 from typer.testing import CliRunner
+
+from slopguard.cli.main import app
 
 runner = CliRunner()
 

@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
+
 from slopguard.core.config import config
 from slopguard.core.engine import InferenceEngine
 
