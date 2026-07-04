@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY pyproject.toml README.md ./
+COPY src/ src/
 RUN pip install --user --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --user --no-warn-script-location -r requirements.txt
+    pip install --user --no-warn-script-location .
 
 # --- Stage 2: Production ---
 FROM python:3.11-slim AS runtime
