@@ -21,3 +21,11 @@ nohup.out
 # OS
 .DS_Store
 Thumbs.db
+
+# Tests & Docs
+.coverage
+htmlcov/
+.pytest_cache/
+site/
+.ruff_cache/
+.mypy_cache/
