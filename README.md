@@ -105,7 +105,7 @@ The server will initialize the inference engine and listen on `http://127.0.0.1:
 ### Data Flow
 
 ```text
-User Input → FastAPI Route/CLI → Input Sanitization → Tokenizer → 
+User Input → FastAPI Route/CLI → Input Sanitization → Tokenizer →
 Hardware-Accelerated Transformer → Softmax Logits → Confidence Scoring → Output
 ```
 
@@ -191,8 +191,8 @@ The repository includes an enterprise-grade GitHub Actions pipeline (`.github/wo
 
 **Error:** `{"detail": "Unauthorized. Invalid or missing API Key."}`
 
-**Solution:** 
-When the `ENV` variable is set to `production`, you must provide the `X-API-KEY` header matching your `API_KEY_INTERNAL` configuration in every request. 
+**Solution:**
+When the `ENV` variable is set to `production`, you must provide the `X-API-KEY` header matching your `API_KEY_INTERNAL` configuration in every request.
 
 ### Missing Dataset
 
@@ -208,5 +208,5 @@ The `slopguard train` command expects a CSV file containing `text` and `label` (
 **Solution:**
 Ensure you are using the correct PyTorch binary for your system architecture.
 - For Apple Silicon: Ensure you installed PyTorch natively via Conda or pip matching your ARM architecture.
-- For NVIDIA: Ensure CUDA toolkits are installed and `torch.cuda.is_available()` returns `True`. 
+- For NVIDIA: Ensure CUDA toolkits are installed and `torch.cuda.is_available()` returns `True`.
 The engine will gracefully fallback to CPU if acceleration libraries are misconfigured, which will increase latency.
