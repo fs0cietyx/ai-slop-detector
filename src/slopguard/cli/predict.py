@@ -5,7 +5,7 @@ from typing import Final
 from slopguard.core.config import logger
 from slopguard.core.engine import InferenceEngine
 
-# --- Cinematic UI Components ---
+# --- CLI Components ---
 BANNER: Final[str] = r"""
     ___    ____   _____ __    ____  ____ 
    /   |  /  _/  / ___// /   / __ \/ __ \
@@ -20,7 +20,7 @@ HR: Final[str] = " " + "─" * 45
 GLOW_DOT: Final[str] = "●"
 
 def print_ui_header() -> None:
-    """Renders the cinematic high-fidelity banner."""
+    """Renders the CLI banner."""
     print("\033[1;36m" + BANNER + "\033[0m")
     print(f"\033[1;30m{HR}\033[0m")
 
@@ -28,7 +28,7 @@ def run_cli() -> None:
     """
     Enterprise CLI Entrypoint for AI Slop Detection.
     
-    Implements high-fidelity visual reporting and hardware acceleration telemetry.
+    Implements visual reporting and hardware acceleration logs.
     """
     if len(sys.argv) < 2:
         print_ui_header()
@@ -40,7 +40,7 @@ def run_cli() -> None:
     print_ui_header()
     
     try:
-        # [Visual Flow] Simulated system check for cinematic effect
+        # [Visual Flow] Simulated system check
         print(f" \033[1;34m{GLOW_DOT}\033[0m INITIALIZING_INFERENCE_ENGINE...")
         
         start_time = time.time()

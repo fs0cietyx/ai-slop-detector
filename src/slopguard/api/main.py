@@ -61,7 +61,7 @@ class DetectionResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """System health telemetry schema."""
+    """System health schema."""
     status: str
     version: str
     engine_online: bool
@@ -71,7 +71,7 @@ class HealthResponse(BaseModel):
 @app.middleware("http")
 async def audit_middleware(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
     """
-    Structured logging and security telemetry for every request.
+    Structured logging and security checks for every request.
     """
     start_time = time.time()
     response = await call_next(request)

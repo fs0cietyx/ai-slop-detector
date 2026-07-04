@@ -11,7 +11,7 @@
 
 ## 🌟 Overview
 
-**SlopGuard-ML** is a specialized detection framework engineered to distinguish between human-authored nuances and the algorithmic patterns of AI-generated content. Originally developed to protect digital ecosystems from low-quality automated "slop," this suite provides a full-stack solution from high-scale dataset crawling and adversarial training to real-time inference via a cinematic CLI.
+**SlopGuard-ML** is a specialized detection framework engineered to distinguish between human-authored nuances and the algorithmic patterns of AI-generated content. Originally developed to protect digital ecosystems from low-quality automated "slop," this suite provides a full-stack solution from high-scale dataset crawling and adversarial training to real-time inference via a robust CLI.
 
 ### 🎯 Real-Life Impact
 *   **Academic Integrity:** Validates student submissions by detecting deep-level linguistic artifacts unique to Large Language Models.
@@ -38,7 +38,7 @@ graph TD
     F --> H
     G --> H
     H --> I[Vectorized Predictions]
-    I --> J[Cinematic CLI Report]
+    I --> J[CLI Output Report]
     I --> K[FastAPI JSON Output]
 ```
 
@@ -55,8 +55,8 @@ The model was trained on the **RAID dataset**, a premier benchmark for AI detect
 
 ### 🖼️ Visual Insights
 
-#### 1. Cinematic CLI Output
-The system features a high-fidelity visual reporting interface that provides real-time telemetry, hardware context, and confidence intervals directly in the terminal.
+#### 1. CLI Output
+The system features a reporting interface that provides real-time logs, hardware context, and confidence intervals directly in the terminal.
 
 ```shell
     ___    ____   _____ __    ____  ____ 
@@ -137,14 +137,14 @@ Ensure you have Python 3.11+ and a supported GPU (optional but recommended).
 git clone https://github.com/your-username/ai-slop-detector.git
 cd ai-slop-detector
 
-# Install via Makefile
-make install
+# Install the package
+pip install -e .
 ```
 
 ### 2. Running Inference (CLI)
-Analyze text with real-time hardware acceleration telemetry.
+Analyze text with real-time hardware logs.
 ```bash
-python -m src.predict "The quick brown fox jumps over the lazy dog."
+slopguard predict "The quick brown fox jumps over the lazy dog."
 ```
 
 ### 3. Containerized Deployment
@@ -160,9 +160,10 @@ docker-compose up --build
 ```text
 .
 ├── src/
-│   ├── core/               # Inference engine & Hardware logic
-│   ├── api/                # FastAPI service
-│   └── predict.py          # Cinematic CLI entrypoint
+│   └── slopguard/
+│       ├── core/           # Inference engine & hardware logic
+│       ├── api/            # FastAPI service
+│       └── cli/            # CLI entrypoint
 ├── models/                 # Model weights & configurations
 ├── benchmarks/             # Visual reports & training logs
 ├── deploy/                 # Docker & CI/CD configurations

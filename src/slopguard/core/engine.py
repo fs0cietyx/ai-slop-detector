@@ -94,7 +94,7 @@ class InferenceEngine:
 
     def _sanitize_payload(self, text: str) -> str:
         """
-        Weaponized Input Sanitization.
+        Input Sanitization.
         
         Neutralizes malformed Unicode, control characters, and resource-exhaustion payloads.
         """

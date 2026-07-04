@@ -180,7 +180,7 @@ class AsyncCrawler:
         for seed in self.config.seeds:
             await self.queue.put(seed)
 
-        with tqdm(total=self.config.target_count, initial=self.collected_count, desc="APEX_CRAWL") as pbar:
+        with tqdm(total=self.config.target_count, initial=self.collected_count, desc="DATA_CRAWL") as pbar:
             workers = [asyncio.create_task(self._worker(i, pbar)) for i in range(num_workers)]
             await asyncio.gather(*workers)
 

@@ -20,7 +20,7 @@ class AppConfig(BaseSettings):
     Hardened Enterprise Configuration Schema.
 
     Enforces strict typing, secrets isolation, and environment-specific validation.
-    Adheres to The Apex Protocol's Zero-Trust Mandate.
+    Adheres to robust security and configuration practices.
     """
 
     # --- Metadata ---
@@ -81,7 +81,7 @@ def setup_logging() -> logging.Logger:
     """
     Configures enterprise-standard structured logging.
     
-    Prevents leakage of sensitive metadata while ensuring granular telemetry.
+    Prevents leakage of sensitive metadata while ensuring actionable logs.
     """
     logger = logging.getLogger(config.APP_NAME)
 

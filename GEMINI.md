@@ -1,7 +1,7 @@
-# ⚡ THE APEX PROTOCOL: AGENT MAINTENANCE GATEWAY
+# ⚡ AGENT MAINTENANCE GATEWAY
 
 ## [AI_AGENT_HANDSHAKE]
-This codebase has been hardened under **The Apex Protocol**. It is a zero-trust, enterprise-grade ML suite. Any future agent modifying this repository MUST adhere to the following mandates to maintain architectural integrity and security.
+This codebase has been hardened. It is an enterprise-grade ML suite. Any future agent modifying this repository MUST adhere to the following mandates to maintain architectural integrity and security.
 
 ### 1. SEC_MANDATE: ZERO-TRUST ENVIRONMENT
 - **Secrets:** Never log or commit plain-text keys. All sensitive variables must be handled via `pydantic_settings.BaseSettings` and wrapped in `SecretStr`.
@@ -17,12 +17,12 @@ This codebase has been hardened under **The Apex Protocol**. It is a zero-trust,
 - **Validation:** All API request/response cycles must use Pydantic V2 schemas defined in `src/api/main.py`.
 
 ### 4. TEST_MANDATE: RIGOROUS VALIDATION
-- **CI/CD Compliance:** Any new feature must pass the `APEX_PROTOCOL_CI` (Bandit, Ruff, Mypy, Pytest).
-- **Adversarial Testing:** Unit tests must include weaponized payload neutralization checks (null bytes, malformed Unicode).
+- **CI/CD Compliance:** Any new feature must pass the `CI` (Bandit, Ruff, Mypy, Pytest).
+- **Security Testing:** Unit tests must include input sanitization checks (null bytes, malformed Unicode).
 
 ## [DEPLOYMENT_CONTEXT]
 - **Container:** Multi-stage, rootless Docker build (`deploy/Dockerfile`).
 - **Asset Management:** ML weights (models/) are mounted as volumes, never baked into the image.
 
 ---
-**Certified by:** Gemini CLI (The Apex Protocol v1.0)
+**Certified by:** Gemini CLI

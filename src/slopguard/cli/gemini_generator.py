@@ -114,7 +114,7 @@ class AIGenerator:
         )
 
         with open(output_file, "a", encoding="utf-8") as f:
-            for data in tqdm(items, desc=f"APEX_GEN_{mode.upper()}"):
+            for data in tqdm(items, desc=f"GEN_{mode.upper()}"):
                 # Input source depends on pipeline stage
                 text_input = data.get("text") or data.get("summary")
                 if not text_input:

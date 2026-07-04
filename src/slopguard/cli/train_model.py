@@ -46,7 +46,7 @@ def run_training() -> None:
         logger.error(f"TRAINING_HALTED: Dataset missing at {data_path}")
         return
 
-    logger.info("Initializing Apex Training Sequence...")
+    logger.info("Initializing Training Sequence...")
 
     # [Optimization] Efficient data ingestion with Pandas
     try:
@@ -129,7 +129,7 @@ def run_training() -> None:
         compute_metrics=compute_metrics,
     )
 
-    logger.info("Apex Training Cycle initiated.")
+    logger.info("Training Cycle initiated.")
     trainer.train()
 
     logger.info(f"Exporting adapters to {config.ADAPTER_PATH}")
