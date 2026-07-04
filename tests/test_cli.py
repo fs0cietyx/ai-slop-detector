@@ -1,4 +1,5 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 from typer.testing import CliRunner
 
 from slopguard.cli.main import app
@@ -12,9 +13,9 @@ def test_cli_predict() -> None:
     with patch("slopguard.core.engine.InferenceEngine") as MockEngine:
         mock_instance = MockEngine.return_value
         mock_instance.predict.return_value = ("HUMAN-WRITTEN", 0.99)
-        
+
         result = runner.invoke(app, ["predict", "This is human written text."])
-        
+
         assert result.exit_code == 0
         # The output might not capture logger.info depending on Typer/Logging setup,
         # but we can at least assert no exceptions were thrown and exit code is 0.

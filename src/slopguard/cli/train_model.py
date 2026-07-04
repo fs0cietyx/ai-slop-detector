@@ -7,7 +7,6 @@ import pandas as pd
 import torch
 from datasets import Dataset
 from peft import LoraConfig, TaskType, get_peft_model
-from slopguard.core.config import config, logger
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -15,6 +14,8 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+
+from slopguard.core.config import config, logger
 
 
 def compute_metrics(eval_pred: Any) -> Dict[str, float]:

@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 import torch
 
 from slopguard.core.config import config
@@ -68,18 +69,19 @@ def test_predict_success() -> None:
     with patch.object(InferenceEngine, "_load_assets", return_value=(mock_tokenizer, mock_model)):
         engine = InferenceEngine()
         label, conf = engine.predict("This is some AI generated slop text")
-        
+
         assert label == "AI-GENERATED"
         # 5.0 vs -1.0 softmax means class 1 is ~99.7%
         assert conf > 0.9
 
+
 def test_predict_error_handling() -> None:
     """Ensure the engine gracefully degrades when the model fails."""
     InferenceEngine._instance = None
-    
+
     mock_tokenizer = MagicMock()
     mock_tokenizer.side_effect = Exception("Out of memory error")
-    
+
     with patch.object(InferenceEngine, "_load_assets", return_value=(mock_tokenizer, MagicMock())):
         engine = InferenceEngine()
         label, conf = engine.predict("Valid text but boom")

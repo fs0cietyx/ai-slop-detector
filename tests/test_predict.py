@@ -1,5 +1,5 @@
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from slopguard.cli.predict import run_cli
 
@@ -22,7 +22,7 @@ def test_predict_cli_with_args() -> None:
             mock_engine = MockEngine.return_value
             mock_engine._device.type = "cpu"
             mock_engine.predict.return_value = ("AI-GENERATED", 0.98)
-            
+
             # Prevent it from calling sys.exit or throwing an exception
             run_cli()
             mock_engine.predict.assert_called_once_with("Test payload")

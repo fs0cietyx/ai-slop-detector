@@ -8,8 +8,9 @@ from typing import List, Optional, Set, Tuple
 
 import httpx
 from bs4 import BeautifulSoup, Tag
-from slopguard.core.config import logger
 from tqdm.asyncio import tqdm
+
+from slopguard.core.config import logger
 
 
 @dataclass(frozen=True)
